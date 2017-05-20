@@ -1,21 +1,20 @@
 CC=gcc
 CFLAGS=-std=c99
 LDFLAGS=
-EXEC=gui
+EXEC=main.elf
 SRC= $(wildcard *.c)
 OBJ= $(SRC:.c=.o)
+HED= $(SRC:.c=.h)
 
 all: $(EXEC)
 
-gui: $(OBJ)
+main.elf: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-gui.o: tab.h
+# main.o: $(HED)
 
-%.o: %.c
+%.o: %.c %.h
 	$(CC) -o $@ -c $< $(CFLAGS)
-
-.PHONY: clean mrproper
 
 clean:
 	rm -rf *.o

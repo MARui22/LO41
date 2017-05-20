@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "tab.h"
 
 
@@ -178,6 +174,86 @@ Tableau* createTableau(int Largeur, int Hauteur, int LargeurCase, char* titre)
 
 }
 
+
+int countLine(char* str)
+{
+
+	int nbline = 1;
+	FOR(i, strlen(str))
+	{
+		if(str[i] == '\n')
+		{
+			++nbline;
+		}
+	}	
+	return nbline;
+}
+
+int largestLine(char* str)
+{
+	int largest = 0,current = 0;
+	FOR(i, strlen(str))
+	{
+		if(str[i] == '\n')
+		{
+			if (current> largest)
+				largest = current;
+			current = 0;
+		}
+		else ++current;
+	}	
+	return largest;
+}
+
+char** parseline(char* str)
+{
+
+	int nbline = countLine(str);
+	char** c =  malloc(nbline*sizeof(char*));
+	
+	int count = 1, line = 0, lastPos = 0;
+	FOR(i, strlen(str))
+	{
+		if(str[i] == '\n')
+		{
+			c[line] = malloc(count*sizeof(char*));
+			for(int x = lastPos; x < i; ++x)
+				c[line][x - lastPos] = str[x];
+			
+			count = 1;
+			lastPos = i+1;
+			++line;
+		}
+		else ++count;
+	}
+	c[line] = malloc(count*sizeof(char*));
+	for(int x = lastPos; x < strlen(str); ++x)
+		c[line][x - lastPos] = str[x];
+	
+	return c;
+	
+}
+
+Label* createLabel(char* text,int X,int Y)
+{
+
+	Label *tab = malloc(sizeof(Label));
+	
+	tab->titre = NULL;
+	tab->H = countLine(text);
+	tab->L = largestLine(text);
+	tab->l = 0;
+	tab->Hchar = countLine(text);
+	tab->Lchar = largestLine(text);
+	tab->X = X;
+	tab->Y = Y; 
+	tab->tab = parseline(text);
+	
+	tab->data = NULL;
+	
+	
+	return tab;	
+}
 
 
  // void main()
