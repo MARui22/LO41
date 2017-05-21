@@ -55,6 +55,54 @@ int getFromScreenPosChar(char* str, int pos)
 	return c;
 }
 
+void Add2End(char* target, char* arrow,int posChar)
+{
+	int charLenArrow = strlen(arrow), CharLenTarget = strlen(target);
+	
+	for(int x = CharLenTarget; x < posChar; ++x)
+		if(target[x] == '\0')
+			strcat(target," ");
+
+
+	FOR(i,charLenArrow)
+		target[i+posChar] = arrow[i];
+}
+
+void RecouvreCharInLine(char* Target, char* arrow,int posChar)
+{	
+	if(strlen(Target) <1)
+		return;	
+	
+	int CharLenTarget = strlen(Target), charLenArrow = strlen(arrow);
+	int screenLenArrow = countScreenChar(arrow);
+		
+	int index = posChar;
+	
+	//on compte le nombre de char à être écrasés
+	FOR(osef,screenLenArrow)
+	{
+		if(Target[index] < 0)
+			index+=3;
+		else
+			index++;
+	}	
+	int toDel = index-posChar;
+	int nbr_case_to_decal = charLenArrow-toDel;
+	
+	
+		//on décale les char
+	for(int x = CharLenTarget-1; x>=posChar; --x)
+	{
+		Target[x+nbr_case_to_decal] = Target[x];
+	}
+
+		//on écrit dessus
+	FOR(X,charLenArrow)
+	{
+		Target[X+posChar] = arrow[X];
+	}	
+}
+
 void Insert(char* c, Tableau* tab,int y)
 {
 	int line = y - tab->Y;
@@ -67,18 +115,15 @@ void Insert(char* c, Tableau* tab,int y)
 	//pint(line,"ligne du tab");
 	// debug();
 	//pint(getFromScreenPosChar(c,tab->X),"pos à atteindre");
-	int max = getFromScreenPosChar(c,tab->X);
-	for(int x = strlen(c); x < max; ++x)
-		if(c[x] == '\0')
-			strcat(c," ");
-
+	int posTab = getFromScreenPosChar(c,tab->X), lenC = strlen(c);
 	
-	FOR(i,strlen(str))
-		c[i+max] = str[i];
-
-	//	debug();
-	//pint(strlen(str), screen[y+1]);
+	if(lenC-1 >= posTab)
+		RecouvreCharInLine(c, str, posTab);
+	else
+		Add2End(c, str, posTab);
+	
 }
+
 
 void draw(Tableau**T, int nbT)
 {

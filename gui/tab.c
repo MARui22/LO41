@@ -179,8 +179,8 @@ Tableau* createTableau(int Largeur, int Hauteur, int LargeurCase, char* titre)
 int countLine(char* str)
 {
 
-	int nbline = 1;
-	FOR(i, strlen(str))
+	int nbline = 1,lenSTR = strlen(str);
+	FOR(i, lenSTR)
 	{
 		if(str[i] == '\n')
 		{
@@ -192,8 +192,8 @@ int countLine(char* str)
 
 int largestLine(char* str)
 {
-	int largest = 0,current = 0;
-	FOR(i, strlen(str))
+	int largest = 0,current = 0, lenSTR = strlen(str);
+	FOR(i, lenSTR)
 	{
 		if(str[i] == '\n')
 		{
@@ -212,8 +212,8 @@ char** parseline(char* str)
 	int nbline = countLine(str);
 	char** c =  malloc(nbline*sizeof(char*));
 	
-	int count = 1, line = 0, lastPos = 0;
-	FOR(i, strlen(str))
+	int count = 1, line = 0, lastPos = 0, lenSTR = strlen(str);
+	FOR(i, lenSTR)
 	{
 		if(str[i] == '\n')
 		{
@@ -228,7 +228,7 @@ char** parseline(char* str)
 		else ++count;
 	}
 	c[line] = malloc(count*sizeof(char*));
-	for(int x = lastPos; x < strlen(str); ++x)
+	for(int x = lastPos; x < lenSTR; ++x)
 		c[line][x - lastPos] = str[x];
 	
 	return c;

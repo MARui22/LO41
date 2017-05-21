@@ -20,7 +20,10 @@ typedef Tableau Label;
 // créer le tableau
 Tableau* createTableau(int Largeur, int Hauteur, int LargeurCase, char* titre);
 
-Label* createLabel(char* text,int X,int Y);
+// créer une zone de text
+Label* createLabel(char* text,int X,int Y); // X et Y sont la position sur la console
+
+
 //accès aux cases
 void setData(Tableau *this, int x,int y,char* str);
 char* getData(Tableau *this, int x,int y);
