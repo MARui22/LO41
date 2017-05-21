@@ -1,6 +1,10 @@
+#ifndef TAB
+#define TAB
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 
 
 typedef struct tabl{
@@ -24,4 +28,4 @@ void setPos(Tableau *tab, int X, int Y);
 
 
 
-
+#endif

@@ -64,8 +64,8 @@ void Insert(char* c, Tableau* tab,int y)
 		str = tab->titre;
 	else
 		str = tab->tab[line];
-	pint(line,"ligne du tab");
-	 debug();
+	//pint(line,"ligne du tab");
+	// debug();
 	//pint(getFromScreenPosChar(c,tab->X),"pos à atteindre");
 	int max = getFromScreenPosChar(c,tab->X);
 	for(int x = strlen(c); x < max; ++x)
@@ -76,13 +76,13 @@ void Insert(char* c, Tableau* tab,int y)
 	FOR(i,strlen(str))
 		c[i+max] = str[i];
 
-		debug();
+	//	debug();
 	//pint(strlen(str), screen[y+1]);
 }
 
 void draw(Tableau**T, int nbT)
 {
-	debug();
+	//debug();
 	int maxXFREE[nbT],  maxY[nbT], Largest = 0;
 	FOR(t, nbT){
 		maxY[t] = T[t]->Y + T[t]->Hchar;
@@ -106,14 +106,14 @@ void draw(Tableau**T, int nbT)
 	// pint(T[1]->Y + T[1]->Hchar, "fintab2 Y");
 	
 	
-	debug();
+	//debug();
 	FOR(y,maxY[0]){
 		FOR(t,nbT){
 			 //printf("\ny = %d t = %d", y,t);
 			if(T[t]->titre){
 				
 				if(IN(T[t]->Y, y, T[t]->Y + T[t]->Hchar +1))	//si ce tableau est dans cette ligne
-				{debug();
+				{//debug();
 					Insert(screen[y], T[t],y-1);
 				}					
 			}
@@ -136,25 +136,25 @@ void draw(Tableau**T, int nbT)
 	printf("\n\n");
 }
 
-void main()
-{
-	const int nbTableaux = 2;
-	Tableau **T = malloc(nbTableaux*sizeof(Tableau*));
-	Tableau *tab1 = createTableau(5,5,2,"Semaphore");
-	Tableau *tab2 = createTableau(5,5,1,"BLBLBLBLBL");
+// void main()
+// {
+	// const int nbTableaux = 2;
+	// Tableau **T = malloc(nbTableaux*sizeof(Tableau*));
+	// Tableau *tab1 = createTableau(5,5,2,"Semaphore");
+	// Tableau *tab2 = createTableau(5,5,1,"BLBLBLBLBL");
 		
-	Label * lab = createLabel("blblb\nfesi", 0,0);
-	setPos(tab2, 10,0);
+	// Label * lab = createLabel("blblb\nfesi", 0,0);
+	// setPos(tab2, 10,0);
 	
-	Tableau *tab3 = createTableau(5,5,1,"tab3");
-	setPos(tab3, 10,13);
+	// Tableau *tab3 = createTableau(5,5,1,"tab3");
+	// setPos(tab3, 10,13);
 	
-	T[0] = lab;
-	//T[2] = tab2;
-	T[1] = tab2;
+	// T[0] = lab;
+	// T[2] = tab2;
+	// T[1] = tab2;
 	
-	setData(tab1, 2,3,"0123456789");
-	setData(tab2, 2,1,"456");
-	draw(T, nbTableaux);
-	//pint(countScreenChar("\u2550\u2556\n\t "), "un \\ ?");
-}
+	// setData(tab1, 2,3,"0123456789");
+	// setData(tab2, 2,1,"456");
+	// draw(T, nbTableaux);
+	// pint(countScreenChar("\u2550\u2556\n\t "), "un \\ ?");
+// }

@@ -17,6 +17,7 @@
 //	 char **tab;
 // } Tableau;
 
+
 void pint(int t, char* c)
 {
 	printf("%s : %d\n",c,t);
