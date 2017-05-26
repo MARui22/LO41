@@ -4,18 +4,15 @@
 
 #include "./gui/gui.h"
 
-
-
-
-void main()
-{
 	const int nbTableaux = 9;
 	const int Largeur_Vaisseau = 15;
 	const int Profondeur_soute_Vaisseau = 2;
 	const int Largeur_Id_Colis = 4;
 	const int general_offset_left = 10;
 	int drone_Y_atterissage, drone_Y_voyage, drone_Y_livraison;
-	
+
+Tableau** initWorld()
+{
 	Tableau **T = malloc(nbTableaux*sizeof(Tableau*));
 	
 	
@@ -71,9 +68,16 @@ void main()
 	setData(client, 2,1,"4|39");
 	setData(departDrone, 3,0,"d4");
 	setData(stockDrone, 4,0,"d5");
-	setData(stockDrone, 5,0,"d6");
+	setData(stockDrone, 5,0,"d6");	
+	
+	return T;
+}
+
+void main()
+{	
+	Tableau **T = initWorld();
 	draw(T, nbTableaux);
-	//pint(countScreenChar("\u2550\u2556\n\t "), "un \\ ?");
+	
 	
 }
 
