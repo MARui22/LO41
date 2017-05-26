@@ -21,6 +21,7 @@ void debug()
 }
 
 char** screen = NULL;
+int HeightScreen = 0; //HeightScreen est le nombre de lignes verticale de l'affichage
 
 int cmpfunc (const void * a, const void * b)
 {
@@ -124,10 +125,20 @@ void Insert(char* c, Tableau* tab,int y)
 	
 }
 
+void deleteScreen(){
+	
+}
 
 void draw(Tableau**T, int nbT)
 {
 	//debug();
+	if (screen) //on nétoie l'écran
+	{
+		FOR(y,HeightScreen)
+			free(screen[y]);
+		free(screen);
+	}
+	
 	int maxXFREE[nbT],  maxY[nbT], Largest = 0;
 	FOR(t, nbT){
 		maxY[t] = T[t]->Y + T[t]->Hchar;
@@ -138,13 +149,15 @@ void draw(Tableau**T, int nbT)
 	}
 	qsort(maxXFREE, nbT, sizeof(int), cmpfunc);
 	qsort(maxY, nbT, sizeof(int), cmpfunc);
-	if (!screen)
-	{
-		screen = malloc(maxY[0]*sizeof(char*));	
+	HeightScreen = maxY[0];
+	
 		
-		FOR(y,maxY[0])
-			screen[y] = malloc(10*(Largest + maxXFREE[0])*sizeof(char));
-	}
+
+	screen = malloc(maxY[0]*sizeof(char*));	
+	
+	FOR(y,maxY[0])
+		screen[y] = malloc(10*(Largest + maxXFREE[0])*sizeof(char));
+
 	// int x;
 	// pint(maxY[0], "max long screen");
 	// pint(T[1]->Y, "pos tab2 Y");
