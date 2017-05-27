@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/shm.h>
 
 
 
@@ -19,6 +20,7 @@ typedef Tableau Label;
 
 // créer le tableau
 Tableau* createTableau(int Largeur, int Hauteur, int LargeurCase, char* titre);
+Tableau* createShmTableau(int Largeur, int Hauteur, int LargeurCase, char* titre, int shmId);
 
 // créer une zone de text
 Label* createLabel(char* text,int X,int Y); // X et Y sont la position sur la console

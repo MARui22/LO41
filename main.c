@@ -1,74 +1,108 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/wait.h>
 
 #include "./gui/gui.h"
 
-	const int nbDrones = 3;
-	const int Largeur_Vaisseau = 15;
-	const int Profondeur_soute_Vaisseau = 2;
-	const int Largeur_Id_Colis = 4;
-	const int general_offset_left = 10;
+#define FOR(p, F) for(int p = 0; p<F; ++p)
+
+
+Tableau** initWorld();
+
+
+#define NBDRONES 3
+#define LARGEUR_VAISSEAU 15
+#define PROFONDEUR_SOUTE_VAISSEAU 2
+#define LARGEUR_ID_COLIS 4
+#define GENERAL_OFFSET_LEFT 10
 	
 	int nbTableaux = 0; //6 + nombre de drones	
 	int drone_Y_atterissage, drone_Y_voyage, drone_Y_livraison;
 
-Tableau** initWorld()	//place les tableaux des drones sur les premières cases
+  int shmD[NBDRONES]; //liste des mémoires partagées des drones
+
+
+void main()
+{	  
+
+
+
+  FOR(x,NBDRONES)
+	{
+		shmD[x] = shmget(IPC_PRIVATE, sizeof(Tableau), 0666);
+    if(shmD[x] <0)
+      puts("echec creation memoire partagee pour les drones");
+	}
+  
+	Tableau **T = initWorld();	//dessine l'univer
+	draw(T, nbTableaux);
+  
+  
+  
+  FOR(x,NBDRONES)
+	{
+     shmdt(T[x]);
+		 shmctl(shmD[x], IPC_RMID, NULL);
+	}
+	
+}
+
+
+Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!! initialisez shmD !!!!
 {
 	if(!nbTableaux)
-		nbTableaux = nbDrones + 6;
+		nbTableaux = NBDRONES + 6;
 	
 	Tableau **T = malloc(nbTableaux*sizeof(Tableau*));
 	
 	
 	//création de l'environnement
-	Tableau *vaisseau = createTableau(Largeur_Vaisseau,
-							Profondeur_soute_Vaisseau,Largeur_Id_Colis,"Cargaison Vaisseau");
-	Tableau *stockDrone = createTableau(Largeur_Vaisseau,1,
-							Largeur_Id_Colis,"Drones en charge");
-	Tableau *departDrone = createTableau(Largeur_Vaisseau,1,
-							Largeur_Id_Colis,"Drones en attente de decollage");
-	Tableau *client = createTableau(Largeur_Vaisseau,Profondeur_soute_Vaisseau,
-							Largeur_Id_Colis, "Ville -- Colis livrees");
+	Tableau *vaisseau = createTableau(LARGEUR_VAISSEAU,
+							PROFONDEUR_SOUTE_VAISSEAU,LARGEUR_ID_COLIS,"Cargaison Vaisseau");
+	Tableau *stockDrone = createTableau(LARGEUR_VAISSEAU,1,
+							LARGEUR_ID_COLIS,"Drones en charge");
+	Tableau *departDrone = createTableau(LARGEUR_VAISSEAU,1,
+							LARGEUR_ID_COLIS,"Drones en attente de decollage");
+	Tableau *client = createTableau(LARGEUR_VAISSEAU,PROFONDEUR_SOUTE_VAISSEAU,
+							LARGEUR_ID_COLIS, "Ville -- Colis livrees");
 							
 	//Positionnnement de l'environnement
-	setPos(vaisseau, general_offset_left,0);
-	setPos(stockDrone, general_offset_left,Profondeur_soute_Vaisseau*2+2);
-	setPos(departDrone, general_offset_left,stockDrone->Y+4);
+	setPos(vaisseau, GENERAL_OFFSET_LEFT,0);
+	setPos(stockDrone, GENERAL_OFFSET_LEFT,PROFONDEUR_SOUTE_VAISSEAU*2+2);
+	setPos(departDrone, GENERAL_OFFSET_LEFT,stockDrone->Y+4);
 	
 	//délimitation des zones aériennes (attente atterissage / voyage / attente livraison)
 	Label * limiteAtterrissageVoyage = createLabel("En attente d'atterrissage\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\nEn voyage", 0,departDrone->Y+4+5);
 	Label * limiteVoyageLivraison = createLabel("En voyage\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\nEn attente de livraison", 0,limiteAtterrissageVoyage->Y+4+5);
 	
-	setPos(client, general_offset_left,limiteVoyageLivraison->Y+4 + 5);	
+	setPos(client, GENERAL_OFFSET_LEFT,limiteVoyageLivraison->Y+4 + 5);	
 
 	
 	//Parramétrage des drones
 	drone_Y_atterissage = departDrone->Y +4;
 	drone_Y_voyage = limiteAtterrissageVoyage->Y+3 +1;
 	drone_Y_livraison = limiteVoyageLivraison->Y+3 +1;
+  
+  char droneName[4];
 	
-	Tableau *drone1= createTableau(1,1,Largeur_Id_Colis,"d1");
-	Tableau *drone2= createTableau(1,1,Largeur_Id_Colis,"d2");
-	Tableau *drone3= createTableau(1,1,Largeur_Id_Colis,"d3");
+  FOR(x, NBDRONES){
+    sprintf(droneName, "d%d", x);
+    T[x] = createShmTableau(1,1,LARGEUR_ID_COLIS,droneName, shmD[x]);
+    setPos(T[x], GENERAL_OFFSET_LEFT + x*(LARGEUR_ID_COLIS+1), drone_Y_livraison );	
+  }
 	
-	setPos(drone1, general_offset_left, drone_Y_livraison );	
-	setPos(drone2, general_offset_left+Largeur_Id_Colis+1, drone_Y_voyage );	
-	setPos(drone3, general_offset_left+2*Largeur_Id_Colis+2, drone_Y_atterissage );	
-	
-	setData(drone1, 0,0,"4|40");
-	setData(drone2, 0,0,"4|41");
+	setData(T[0], 0,0,"4|40");
+	setData(T[1], 0,0,"4|41");
 
-
-	T[0] = drone1;
-	T[1] = drone2;
-	T[2] = drone3;	
-	T[3] = vaisseau;
-	T[4] = stockDrone;
-	T[5] = departDrone;
-	T[6] = limiteAtterrissageVoyage;
-	T[7] = limiteVoyageLivraison;
-	T[8] = client;
+  int lereste = NBDRONES-1;
+	T[++lereste] = vaisseau;
+	T[++lereste] = stockDrone;
+	T[++lereste] = departDrone;
+	T[++lereste] = limiteAtterrissageVoyage;
+	T[++lereste] = limiteVoyageLivraison;
+	T[++lereste] = client;
 	
 	setData(vaisseau, 2,1,"3|00");
 	setData(client, 2,1,"4|39");
@@ -79,11 +113,5 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases
 	return T;
 }
 
-void main()
-{	
-	Tableau **T = initWorld();	//dessine l'univer
-	draw(T, nbTableaux);
-	
-	
-}
+
 

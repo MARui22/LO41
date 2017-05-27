@@ -1,6 +1,7 @@
 #include "tab.h"
 
 
+
 #define FOR(p, F) for(int p = 0; p<F; ++p)
 
 #define FIRST (int)0
@@ -150,11 +151,15 @@ char* getData(Tableau *this, int x,int y)
 
 }
 
-Tableau* createTableau(int Largeur, int Hauteur, int LargeurCase, char* titre)
+
+
+
+
+
+Tableau * InitTableau(int Largeur, int Hauteur, int LargeurCase, char* titre, Tableau *tab)
 {
-	Tableau *tab = malloc(sizeof(Tableau));
 	
-	tab->titre = titre;
+	tab->titre = strcpy(malloc(strlen(titre)*sizeof(char)),titre);
 	tab->H = Hauteur;
 	tab->L = Largeur;
 	tab->l = LargeurCase;
@@ -172,9 +177,23 @@ Tableau* createTableau(int Largeur, int Hauteur, int LargeurCase, char* titre)
 	genere(tab);
 
 	return tab;
+}
+
+
+Tableau* createTableau(int Largeur, int Hauteur, int LargeurCase, char* titre)
+{
+	Tableau *tab = malloc(sizeof(Tableau));
+
+	return InitTableau(Largeur, Hauteur, LargeurCase, titre, tab);
 
 }
 
+Tableau* createShmTableau(int Largeur, int Hauteur, int LargeurCase, char* titre, int shmId)
+{
+	Tableau *tab = (Tableau *)shmat(shmId, NULL, 0);
+	
+	return InitTableau(Largeur, Hauteur, LargeurCase, titre, tab);
+}
 
 int countLine(char* str)
 {
