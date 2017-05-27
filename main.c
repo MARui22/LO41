@@ -4,15 +4,20 @@
 
 #include "./gui/gui.h"
 
-	const int nbTableaux = 9;
+	const int nbDrones = 3;
 	const int Largeur_Vaisseau = 15;
 	const int Profondeur_soute_Vaisseau = 2;
 	const int Largeur_Id_Colis = 4;
 	const int general_offset_left = 10;
+	
+	int nbTableaux = 0; //6 + nombre de drones	
 	int drone_Y_atterissage, drone_Y_voyage, drone_Y_livraison;
 
-Tableau** initWorld()
+Tableau** initWorld()	//place les tableaux des drones sur les premières cases
 {
+	if(!nbTableaux)
+		nbTableaux = nbDrones + 6;
+	
 	Tableau **T = malloc(nbTableaux*sizeof(Tableau*));
 	
 	
@@ -53,16 +58,17 @@ Tableau** initWorld()
 	
 	setData(drone1, 0,0,"4|40");
 	setData(drone2, 0,0,"4|41");
-	
-	T[0] = vaisseau;
-	T[1] = stockDrone;
-	T[2] = departDrone;
-	T[3] = limiteAtterrissageVoyage;
-	T[4] = limiteVoyageLivraison;
-	T[5] = drone1;
-	T[6] = client;
-	T[7] = drone2;
-	T[8] = drone3;
+
+
+	T[0] = drone1;
+	T[1] = drone2;
+	T[2] = drone3;	
+	T[3] = vaisseau;
+	T[4] = stockDrone;
+	T[5] = departDrone;
+	T[6] = limiteAtterrissageVoyage;
+	T[7] = limiteVoyageLivraison;
+	T[8] = client;
 	
 	setData(vaisseau, 2,1,"3|00");
 	setData(client, 2,1,"4|39");
@@ -75,7 +81,7 @@ Tableau** initWorld()
 
 void main()
 {	
-	Tableau **T = initWorld();
+	Tableau **T = initWorld();	//dessine l'univer
 	draw(T, nbTableaux);
 	
 	
