@@ -159,7 +159,7 @@ char* getData(Tableau *this, int x,int y)
 Tableau * InitTableau(int Largeur, int Hauteur, int LargeurCase, char* titre, Tableau *tab)
 {
 	
-	tab->titre = strcpy(malloc(strlen(titre)*sizeof(char)),titre);
+	tab->titre = strcpy(malloc((1+strlen(titre))*sizeof(char)),titre);
 	tab->H = Hauteur;
 	tab->L = Largeur;
 	tab->l = LargeurCase;

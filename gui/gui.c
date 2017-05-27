@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -153,10 +154,10 @@ void draw(Tableau**T, int nbT)
 	
 		
 
-	screen = malloc(maxY[0]*sizeof(char*));	
+	screen = malloc(HeightScreen*sizeof(char*));	
 	
 	FOR(y,maxY[0])
-		screen[y] = malloc(10*(Largest + maxXFREE[0])*sizeof(char));
+		screen[y] = calloc(10*(Largest + maxXFREE[0]),sizeof(char));
 
 	// int x;
 	// pint(maxY[0], "max long screen");
@@ -187,7 +188,6 @@ void draw(Tableau**T, int nbT)
 	
 	// if (T[0]->titre)
 		// printf("\n%s\n", T[0]->titre);
-	
 	FOR(i,maxY[0]){
 		printf("\n%s", screen[i]);
 	}

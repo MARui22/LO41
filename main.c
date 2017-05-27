@@ -1,8 +1,14 @@
+#define _POSIX_SOURCE
+#define _XOPEN_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
+#include <signal.h>
 
 #include "./gui/gui.h"
 
@@ -10,6 +16,7 @@
 
 
 Tableau** initWorld();
+void finish(int i);
 
 
 #define NBDRONES 3
@@ -22,13 +29,17 @@ Tableau** initWorld();
 	int drone_Y_atterissage, drone_Y_voyage, drone_Y_livraison;
 
   int shmD[NBDRONES]; //liste des mémoires partagées des drones
+  Tableau **T;
 
+void drawUnivers(int i)
+{
+ 
+  draw(T,nbTableaux);
+  signal(SIGUSR1, drawUnivers); 
+}
 
 void main()
 {	  
-
-
-
   FOR(x,NBDRONES)
 	{
 		shmD[x] = shmget(IPC_PRIVATE, sizeof(Tableau), 0666);
@@ -36,18 +47,51 @@ void main()
       puts("echec creation memoire partagee pour les drones");
 	}
   
-	Tableau **T = initWorld();	//dessine l'univer
+	T = initWorld();	//dessine l'univer
 	draw(T, nbTableaux);
+
+draw(T, nbTableaux);
+draw(T, nbTableaux);
   
+  srand(time(NULL));
   
+   
   
-  FOR(x,NBDRONES)
-	{
-     shmdt(T[x]);
-		 shmctl(shmD[x], IPC_RMID, NULL);
+  pid_t pid = fork();
+  if(pid == 0){ //fils
+    FOR(osef,2)
+    {
+      sleep(rand()/(RAND_MAX/2)+2);
+      setPos(T[0], GENERAL_OFFSET_LEFT,drone_Y_voyage);      
+      kill(getppid(), SIGUSR1);
+
+
+      sleep(rand()/(RAND_MAX/2)+2);
+      setPos(T[0], GENERAL_OFFSET_LEFT,drone_Y_livraison);
+      kill(getppid(), SIGUSR1);
+
+    }
+    exit(5);
+  }
+  else{
+    signal(SIGUSR1, drawUnivers);  
+
+    int* error = malloc(sizeof(int));
+    *error = 0;
+    
+    while(*error == 0){
+      wait(error);
+      }
+
+
+    FOR(x,NBDRONES)
+    {
+       shmdt(T[x]);
+       shmctl(shmD[x], IPC_RMID, NULL);
+    }
 	}
-	
 }
+
 
 
 Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!! initialisez shmD !!!!
@@ -57,7 +101,7 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
 	
 	Tableau **T = malloc(nbTableaux*sizeof(Tableau*));
 	
-	
+	//int shmid = shmget(IPC_PRIVATE, nbTableaux*sizeof(Tableau*), 0666);
 	//création de l'environnement
 	Tableau *vaisseau = createTableau(LARGEUR_VAISSEAU,
 							PROFONDEUR_SOUTE_VAISSEAU,LARGEUR_ID_COLIS,"Cargaison Vaisseau");
@@ -96,13 +140,13 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
 	setData(T[0], 0,0,"4|40");
 	setData(T[1], 0,0,"4|41");
 
-  int lereste = NBDRONES-1;
-	T[++lereste] = vaisseau;
-	T[++lereste] = stockDrone;
-	T[++lereste] = departDrone;
-	T[++lereste] = limiteAtterrissageVoyage;
-	T[++lereste] = limiteVoyageLivraison;
-	T[++lereste] = client;
+  int lereste = NBDRONES;
+	T[lereste++] = vaisseau;
+	T[lereste++] = stockDrone;
+	T[lereste++] = departDrone;
+	T[lereste++] = limiteAtterrissageVoyage;
+	T[lereste++] = limiteVoyageLivraison;
+	T[lereste++] = client;
 	
 	setData(vaisseau, 2,1,"3|00");
 	setData(client, 2,1,"4|39");
