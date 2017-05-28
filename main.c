@@ -11,6 +11,7 @@
 #include <signal.h>
 
 #include "./gui/gui.h"
+#include "const.h"
 
 #define FOR(p, F) for(int p = 0; p<F; ++p)
 
@@ -19,16 +20,16 @@ Tableau** initWorld();
 void finish(int i);
 
 
-#define NBDRONES 3
-#define LARGEUR_VAISSEAU 15
-#define PROFONDEUR_SOUTE_VAISSEAU 2
-#define LARGEUR_ID_COLIS 4
-#define GENERAL_OFFSET_LEFT 10
-	
-	int nbTableaux = 0; //6 + nombre de drones	
-	int drone_Y_atterissage, drone_Y_voyage, drone_Y_livraison, drone_Y_dead;
-
-  int shmD[NBDRONES]; //liste des mémoires partagées des drones
+/*#define NBDRONES 3*/
+/*#define LARGEUR_VAISSEAU 15*/
+/*#define PROFONDEUR_SOUTE_VAISSEAU 2*/
+/*#define LARGEUR_ID_COLIS 4*/
+/*#define GENERAL_OFFSET_LEFT 10*/
+	/**/
+	/*int nbTableaux = 0; //6 + nombre de drones	*/
+	/*int drone_Y_atterissage, drone_Y_voyage, drone_Y_livraison, drone_Y_dead;*/
+/**/
+  /*int shmD[NBDRONES]; //liste des mémoires partagées des drones*/
   Tableau **T;
 
 void drawUnivers(int i)
@@ -56,18 +57,7 @@ void main()
   
   pid_t pid = fork();
   if(pid == 0){ //fils
-    FOR(osef,2)
-    {
-      sleep(rand()/(RAND_MAX/2)+2);
-      setPos(T[0], GENERAL_OFFSET_LEFT,drone_Y_voyage);      
-      kill(getppid(), SIGUSR1);
-
-
-      sleep(rand()/(RAND_MAX/2)+2);
-      setPos(T[0], GENERAL_OFFSET_LEFT,drone_Y_livraison);
-      kill(getppid(), SIGUSR1);
-
-    }
+      execlp("drone/drone.elf", "drone.elf", (char*)0);
     exit(5);
   }
   else{

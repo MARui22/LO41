@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE
+#define _POSIX_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
@@ -8,13 +9,17 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
+
 
 #include "../gui/gui.h"
+#include "../const.h"
  
  void main(int argc, char *argv[]){
  
    srand(time(NULL));
    printf("success");
+   
    
   /*sleep(rand()/(RAND_MAX/2)+2);*/
   /*setPos(T[0], GENERAL_OFFSET_LEFT,drone_Y_voyage);      */

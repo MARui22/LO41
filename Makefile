@@ -15,7 +15,7 @@ all: $(EXEC)
 main.elf: $(OBJ) main.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 	
-$(DRONE_DIR)/drone.elf:
+$(DRONE_DIR)/drone.elf: $(DRONE_DIR)/drone.o
 	@(cd $(DRONE_DIR) && $(MAKE))
 
 main.o: main.c $(HED)

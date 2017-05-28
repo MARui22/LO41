@@ -5,7 +5,7 @@ OBJ= $(SRC:.c=.o)
 
 all: $(EXEC)
 
-drone.elf: $(OBJ)
+drone.elf: $(OBJ) ../const.h ../gui/tab.o
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c
