@@ -12,7 +12,7 @@
 typedef struct tabl{
 	char* titre;
 
-	int L,H, l, X,Y, Lchar,Hchar;
+	int L,H, l, *X,*Y, Lchar,Hchar;
 	char *** data;
 	char **tab;
 } Tableau;

@@ -30,7 +30,7 @@ void genereDataVoid(Tableau *this){
 	for(int y = 0; y < this->H; ++y){
 		this->data[y] = malloc(this->L*sizeof(char*));
 		FOR(x,this->L){
-			this->data[y][x] = malloc((this->l+1)*sizeof(char));
+			this->data[y][x] = calloc((this->l+1), sizeof(char));
 			FOR(z, this->l)
 				this->data[y][x][z] = ' ';
 			//printf("%d", (int)strlen(this->data[y][x]));
@@ -129,8 +129,8 @@ void setData(Tableau *this, int x,int y,char* str)
 
 void setPos(Tableau *tab, int X, int Y)
 {
-	tab->X = X;
-	tab->Y = Y;
+	*(tab->X) = X;
+	*(tab->Y) = Y;
 }
 
 char* getData(Tableau *this, int x,int y)
@@ -143,7 +143,7 @@ char* getData(Tableau *this, int x,int y)
 	while(this->data[y][x][z] == ' ' || this->data[y][x][z] == '\0')
 		--z;
 	++z;
-	char* str = malloc((z+1)*sizeof(char));
+	char* str = calloc((z+1),sizeof(char));
 	FOR(i,z)
 		str[i] = this->data[y][x][i];
 
@@ -159,18 +159,20 @@ char* getData(Tableau *this, int x,int y)
 Tableau * InitTableau(int Largeur, int Hauteur, int LargeurCase, char* titre, Tableau *tab)
 {
 	
-	tab->titre = strcpy(malloc((1+strlen(titre))*sizeof(char)),titre);
+	tab->titre = strcpy(calloc((1+strlen(titre)),sizeof(char)),titre);
 	tab->H = Hauteur;
 	tab->L = Largeur;
 	tab->l = LargeurCase;
 	tab->Hchar = (2*tab->H +1);
 	tab->Lchar = ((tab->l+1)*tab->L +1)*3+1;
-	tab->X = 0;
-	tab->Y = 0;
+  tab->X = malloc(sizeof(int));
+  tab->Y = malloc(sizeof(int));
+  *(tab->X) = 0;
+	*(tab->Y) = 0; 
 
 	tab->tab = malloc(tab->Hchar*sizeof(char*));
 	FOR(y,tab->Hchar)
-		tab->tab[y] = malloc(tab->Lchar*sizeof(char));
+		tab->tab[y] = calloc(tab->Lchar, sizeof(char));
 
 
 	genereDataVoid(tab);
@@ -265,8 +267,10 @@ Label* createLabel(char* text,int X,int Y)
 	tab->l = 0;
 	tab->Hchar = countLine(text);
 	tab->Lchar = largestLine(text);
-	tab->X = X;
-	tab->Y = Y; 
+  tab->X = malloc(sizeof(int));
+  tab->Y = malloc(sizeof(int));
+  *(tab->X) = X;
+	*(tab->Y) = Y; 
 	tab->tab = parseline(text);
 	
 	tab->data = NULL;

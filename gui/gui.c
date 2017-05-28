@@ -107,7 +107,7 @@ void RecouvreCharInLine(char* Target, char* arrow,int posChar)
 
 void Insert(char* c, Tableau* tab,int y)
 {
-	int line = y - tab->Y;
+	int line = y - *(tab->Y);
 	char* str;
 
 	if(line <0)
@@ -117,7 +117,7 @@ void Insert(char* c, Tableau* tab,int y)
 	//pint(line,"ligne du tab");
 	// debug();
 	//pint(getFromScreenPosChar(c,tab->X),"pos à atteindre");
-	int posTab = getFromScreenPosChar(c,tab->X), lenC = strlen(c);
+	int posTab = getFromScreenPosChar(c,*(tab->X)), lenC = strlen(c);
 	
 	if(lenC-1 >= posTab)
 		RecouvreCharInLine(c, str, posTab);
@@ -142,8 +142,8 @@ void draw(Tableau**T, int nbT)
 	
 	int maxXFREE[nbT],  maxY[nbT], Largest = 0;
 	FOR(t, nbT){
-		maxY[t] = T[t]->Y + T[t]->Hchar;
-		maxXFREE[t] = T[t]->X;
+		maxY[t] = *(T[t]->Y) + T[t]->Hchar;
+		maxXFREE[t] = *(T[t]->X);
 		Largest += T[t]->Lchar;
 		if(T[t]->titre)
 			++maxY[t];
@@ -171,13 +171,13 @@ void draw(Tableau**T, int nbT)
 			 //printf("\ny = %d t = %d", y,t);
 			if(T[t]->titre){
 				
-				if(IN(T[t]->Y, y, T[t]->Y + T[t]->Hchar +1))	//si ce tableau est dans cette ligne
+				if(IN(*(T[t]->Y), y, *(T[t]->Y) + T[t]->Hchar +1))	//si ce tableau est dans cette ligne
 				{//debug();
 					Insert(screen[y], T[t],y-1);
 				}					
 			}
 			else{	//idem, mais sans titre
-				if(IN(T[t]->Y, y, T[t]->Y + T[t]->Hchar))
+				if(IN(*(T[t]->Y), y, *(T[t]->Y) + T[t]->Hchar))
 					Insert(screen[y], T[t],y);		
 			}
 			
