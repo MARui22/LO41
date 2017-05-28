@@ -26,7 +26,7 @@ void finish(int i);
 #define GENERAL_OFFSET_LEFT 10
 	
 	int nbTableaux = 0; //6 + nombre de drones	
-	int drone_Y_atterissage, drone_Y_voyage, drone_Y_livraison;
+	int drone_Y_atterissage, drone_Y_voyage, drone_Y_livraison, drone_Y_dead;
 
   int shmD[NBDRONES]; //liste des mémoires partagées des drones
   Tableau **T;
@@ -97,7 +97,7 @@ draw(T, nbTableaux);
 Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!! initialisez shmD !!!!
 {
 	if(!nbTableaux)
-		nbTableaux = NBDRONES + 6;
+		nbTableaux = NBDRONES + 7;
 	
 	Tableau **T = malloc(nbTableaux*sizeof(Tableau*));
 	
@@ -120,21 +120,24 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
 	//délimitation des zones aériennes (attente atterissage / voyage / attente livraison)
 	Label * limiteAtterrissageVoyage = createLabel("En attente d'atterrissage\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\nEn voyage", 0,departDrone->Y+4+5);
 	Label * limiteVoyageLivraison = createLabel("En voyage\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\nEn attente de livraison", 0,limiteAtterrissageVoyage->Y+4+5);
+	Label * limiteDead = createLabel("Dead\t\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501", 0,
+      limiteVoyageLivraison->Y+4 + 5+2*PROFONDEUR_SOUTE_VAISSEAU+2+4);
 	
-	setPos(client, GENERAL_OFFSET_LEFT,limiteVoyageLivraison->Y+4 + 5);	
+  setPos(client, GENERAL_OFFSET_LEFT,limiteVoyageLivraison->Y+4 + 5);	
 
 	
 	//Parramétrage des drones
 	drone_Y_atterissage = departDrone->Y +4;
 	drone_Y_voyage = limiteAtterrissageVoyage->Y+3 +1;
 	drone_Y_livraison = limiteVoyageLivraison->Y+3 +1;
+  drone_Y_dead = limiteDead->Y-3;
   
   char droneName[4];
 	
   FOR(x, NBDRONES){
     sprintf(droneName, "d%d", x);
     T[x] = createShmTableau(1,1,LARGEUR_ID_COLIS,droneName, shmD[x]);
-    setPos(T[x], GENERAL_OFFSET_LEFT + x*(LARGEUR_ID_COLIS+1), drone_Y_livraison );	
+    setPos(T[x], GENERAL_OFFSET_LEFT + x*(LARGEUR_ID_COLIS+1), drone_Y_dead );	
   }
 	
 	setData(T[0], 0,0,"4|40");
@@ -147,6 +150,7 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
 	T[lereste++] = limiteAtterrissageVoyage;
 	T[lereste++] = limiteVoyageLivraison;
 	T[lereste++] = client;
+  T[lereste++] = limiteDead;
 	
 	setData(vaisseau, 2,1,"3|00");
 	setData(client, 2,1,"4|39");
