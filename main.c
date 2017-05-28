@@ -49,9 +49,6 @@ void main()
   
 	T = initWorld();	//dessine l'univer
 	draw(T, nbTableaux);
-
-draw(T, nbTableaux);
-draw(T, nbTableaux);
   
   srand(time(NULL));
   
