@@ -18,7 +18,7 @@ main.elf: $(OBJ) main.o
 $(DRONE_DIR)/drone.elf: $(DRONE_DIR)/drone.o
 	@(cd $(DRONE_DIR) && $(MAKE))
 
-main.o: main.c $(HED)
+main.o: main.c $(HED) const.h
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 %.o: %.c

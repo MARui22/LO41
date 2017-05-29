@@ -38,12 +38,14 @@ void finish(int i);
 
 void drawUnivers(int i)
 {
-  signal(SIGUSR1, drawUnivers); 
+   signal(SIGUSR1, SIG_IGN);
+   
   
   FOR(x, NBDRONES)
     setData(T[x], 0,0, dataDrone[x]);
   
   draw(T,nbTableaux);  
+  signal(SIGUSR1, drawUnivers);
 }
 
 void finTravail(int i)
@@ -51,6 +53,7 @@ void finTravail(int i)
   signal(SIGUSR2, finTravail); 
   
   --nbDroneTravail;
+  
 }
 
 char* itoa(int i){
@@ -79,9 +82,7 @@ void main()
   pid_t pid[NBDRONES];
   FOR(x, NBDRONES){
     pid[x]= fork();
-    if(pid[x] == 0){ //fils n°x
-        srand(time(NULL));
-        sleep(rand()/(RAND_MAX/2)+1);
+    if(pid[x] == 0){ //Fils n°x ------------------- RECOUVREMENT DRONE ------------------------------//
       execlp("drone/drone.elf", "drone.elf", itoa(shmDY[x]), itoa(shmDC[x]), (char*)0);
       exit(5);
     }

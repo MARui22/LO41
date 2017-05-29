@@ -1,7 +1,7 @@
 #ifndef CONST
 #define CONST
 
-#define NBDRONES 3
+#define NBDRONES 10
 #define LARGEUR_VAISSEAU 15
 #define PROFONDEUR_SOUTE_VAISSEAU 2
 #define LARGEUR_ID_COLIS 4
