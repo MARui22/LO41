@@ -34,7 +34,7 @@ void finish(int i);
   char* dataDrone[NBDRONES];  //Liste des identifants colis des drones en temps réel
   Tableau **T;
   
-  int nbDroneTravail = 1; // !!!!!!!!!!!!!!!!!!!!!!!! en nominial, ça vaut le nombre de drones !
+  int nbDroneTravail = NBDRONES; // !!!!!!!!!!!!!!!!!!!!!!!! en nominial, ça vaut le nombre de drones !
 
 void drawUnivers(int i)
 {
@@ -74,37 +74,40 @@ void main()
   
 	T = initWorld();	//dessine l'univer
 	draw(T, nbTableaux);
-  
-  srand(time(NULL));
-  
    
   
-  pid_t pid = fork();
-  if(pid == 0){ //fils
-      execlp("drone/drone.elf", "drone.elf", itoa(shmDY[0]), itoa(shmDC[0]), (char*)0);
-    exit(5);
-  }
-  else{
-    signal(SIGUSR1, drawUnivers); 
-    signal(SIGUSR2, finTravail);
-
-    int* error = malloc(sizeof(int));
-    *error = 0;
-    
-    while(nbDroneTravail){
-      pause();
-      }
-
-
-    FOR(x,NBDRONES)
-    {
-       shmdt(T[x]->Y);
-       shmdt(dataDrone[x]);
-       
-       shmctl(shmDY[x], IPC_RMID, NULL);
-       shmctl(shmDC[x], IPC_RMID, NULL);
+  pid_t pid[NBDRONES];
+  FOR(x, NBDRONES){
+    pid[x]= fork();
+    if(pid[x] == 0){ //fils n°x
+        srand(time(NULL));
+        sleep(rand()/(RAND_MAX/2)+1);
+      execlp("drone/drone.elf", "drone.elf", itoa(shmDY[x]), itoa(shmDC[x]), (char*)0);
+      exit(5);
     }
-	}
+  }
+  
+  
+  signal(SIGUSR1, drawUnivers); 
+  signal(SIGUSR2, finTravail);
+
+  int* error = malloc(sizeof(int));
+  *error = 0;
+  
+  while(nbDroneTravail){
+    pause();
+    }
+
+
+  FOR(x,NBDRONES)
+  {
+     shmdt(T[x]->Y);
+     shmdt(dataDrone[x]);
+     
+     shmctl(shmDY[x], IPC_RMID, NULL);
+     shmctl(shmDC[x], IPC_RMID, NULL);
+  }
+	
 }
 
 
@@ -159,7 +162,7 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
   }
   
 	strcpy(dataDrone[0],"4|40");
-	setData(T[1], 0,0,"4|41");
+	strcpy(dataDrone[1],"4|41");
 
   int lereste = NBDRONES;
 	T[lereste++] = vaisseau;

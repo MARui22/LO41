@@ -33,7 +33,7 @@
   
   sleep(rand()/(RAND_MAX/2)+2);
   *y = drone_Y_atterissage;
-  strcpy(Id_colis, ""); //on décharge le colis !!! ATTENTION !!! TOUJOURS utiliser strcpy(), car un "=" fait sauter la référence à la mémoire partagée !!!!!!
+  strcpy(Id_colis, "0123"); //on décharge le colis !!! ATTENTION !!! TOUJOURS utiliser strcpy(), car un "=" fait sauter la référence à la mémoire partagée !!!!!!
   kill(getppid(), SIGUSR1);
   
   
