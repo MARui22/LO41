@@ -1,8 +1,10 @@
 #define _POSIX_SOURCE
 #define _XOPEN_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
+#include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -17,6 +19,7 @@
 
 
 Tableau** initWorld();
+int initsem();
 void finish(int i);
 
 
@@ -29,9 +32,12 @@ void finish(int i);
 	/*int nbTableaux = 0; //6 + nombre de drones	*/
 	/*int drone_Y_atterissage, drone_Y_voyage, drone_Y_livraison, drone_Y_dead;*/
 /**/
-  int shmDY[NBDRONES]; //liste des mémoires partagées de la hauteur des drones*/
-  int shmDC[NBDRONES]; //liste des mémoires partagées du chargement des drones
-  char* dataDrone[NBDRONES];  //Liste des identifants colis des drones en temps réel
+  int shmDId[NBDRONES];
+  int shmEndId;
+  
+  IPCDrone *shmD[NBDRONES]; //liste des mémoires partagées de la hauteur des drones*/
+  int *shmEnd;
+  
   Tableau **T;
   
   int nbDroneTravail = NBDRONES; // !!!!!!!!!!!!!!!!!!!!!!!! en nominial, ça vaut le nombre de drones !
@@ -41,8 +47,10 @@ void drawUnivers(int i)
    signal(SIGUSR1, SIG_IGN);
    
   
-  FOR(x, NBDRONES)
-    setData(T[x], 0,0, dataDrone[x]);
+  FOR(x, NBDRONES){
+    setData(T[x], 0,0, shmD[x]->colis);
+    *(T[x]->Y) = shmD[x]->posYDrone;
+  }
   
   draw(T,nbTableaux);  
   signal(SIGUSR1, drawUnivers);
@@ -66,14 +74,24 @@ void main()
 {	  
   FOR(x,NBDRONES)
 	{
-		shmDY[x] = shmget(IPC_PRIVATE, sizeof(int), 0666|IPC_CREAT);
-    if(shmDY[x] <0)
+		shmDId[x] = shmget(IPC_PRIVATE, sizeof(IPCDrone), 0666|IPC_CREAT);
+    if(shmD[x] <0)
       puts("echec creation memoire partagee pour les drones");
     
-    shmDC[x] = shmget(IPC_PRIVATE, (1+LARGEUR_ID_COLIS)*sizeof(char), 0666|IPC_CREAT);
-    if(shmDC[x] <0)
-      puts("echec creation memoire partagee pour les drones");
+    shmD[x] = shmat(shmDId[x], NULL, 0);
+    
 	}
+  
+  shmEndId = shmget(IPC_PRIVATE, sizeof(int), 0666|IPC_CREAT);
+  if(shmEndId <0)
+      puts("echec creation memoire partagee pour la fin du programme");
+  shmEnd = shmat(shmEndId, NULL, 0);
+  *shmEnd = NBDRONES;
+  
+  //init semaphore
+  int semEnd = initsem();
+  pint(semctl(semEnd, 0, GETVAL, 0), "semEnd");
+  
   
 	T = initWorld();	//dessine l'univer
 	draw(T, nbTableaux);
@@ -83,7 +101,7 @@ void main()
   FOR(x, NBDRONES){
     pid[x]= fork();
     if(pid[x] == 0){ //Fils n°x ------------------- RECOUVREMENT DRONE ------------------------------//
-      execlp("drone/drone.elf", "drone.elf", itoa(shmDY[x]), itoa(shmDC[x]), (char*)0);
+      execlp("drone/drone.elf", "drone.elf", itoa(shmDId[x]), itoa(shmEndId), itoa(semEnd), (char*)0);
       exit(5);
     }
   }
@@ -95,23 +113,60 @@ void main()
   int* error = malloc(sizeof(int));
   *error = 0;
   
-  while(nbDroneTravail){
-    pause();
+  int loop = 1;
+  
+  while(loop)
+  {
+    P(semEnd);
+    if(*shmEnd != 0)
+    {
+      V(semEnd);
+      sleep(1);
+    }else{
+      V(semEnd);
+      loop = 0;
     }
+  }
 
+  /*while(nbDroneTravail){*/
+    /*pause();*/
+    /*}*/
+ // wait(NULL);
+  pint(semctl(semEnd, 0, GETVAL, 0), "semEnd");
 
+  shmdt(shmEnd);
+  shmctl(shmEndId, IPC_RMID, NULL);
+  
   FOR(x,NBDRONES)
   {
-     shmdt(T[x]->Y);
-     shmdt(dataDrone[x]);
-     
-     shmctl(shmDY[x], IPC_RMID, NULL);
-     shmctl(shmDC[x], IPC_RMID, NULL);
+     shmdt(shmD[x]);
+      
+     shmctl(shmDId[x], IPC_RMID, NULL);
   }
 	
 }
 
-
+int initsem() 
+{
+    
+	int status = 0;		
+	int semid_init;
+   	union semun {
+		int val;
+		struct semid_ds *stat;
+		ushort * array;
+	} ctl_arg;
+    if ((semid_init = semget(IPC_PRIVATE, 1, 0666|IPC_CREAT)) > 0) {
+		
+	    	ushort array[1] = {1};
+	    	ctl_arg.array = array;
+	    	status = semctl(semid_init, 0, SETALL, ctl_arg);
+    }
+   if (semid_init == -1 || status == -1) { 
+	perror("Erreur initsem");
+	return (-1);
+    } else return (semid_init);
+}
 
 Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!! initialisez shmD !!!!
 {
@@ -156,14 +211,11 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
   FOR(x, NBDRONES){
     sprintf(droneName, "d%d", x);
     T[x] = createTableau(1,1,LARGEUR_ID_COLIS,droneName);
-    
-    T[x]->Y = shmat(shmDY[x], NULL, 0);
-    dataDrone[x] = shmat(shmDC[x], NULL, 0); //fair un free() avant nn ?
     setPos(T[x], GENERAL_OFFSET_LEFT + x*(LARGEUR_ID_COLIS+1), drone_Y_dead );
   }
   
-	strcpy(dataDrone[0],"4|40");
-	strcpy(dataDrone[1],"4|41");
+	strcpy(shmD[0]->colis,"4|40");
+	strcpy(shmD[1]->colis,"4|41");
 
   int lereste = NBDRONES;
 	T[lereste++] = vaisseau;

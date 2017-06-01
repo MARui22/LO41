@@ -1,6 +1,11 @@
 #ifndef CONST
 #define CONST
 
+#include <sys/ipc.h>
+#include <sys/sem.h>
+//#include <sys/shm.h>
+#include <sys/types.h>
+
 #define NBDRONES 10
 #define LARGEUR_VAISSEAU 15
 #define PROFONDEUR_SOUTE_VAISSEAU 2
@@ -12,6 +17,34 @@
 #define drone_Y_livraison (28+2*PROFONDEUR_SOUTE_VAISSEAU)
 #define drone_Y_dead (8+2*PROFONDEUR_SOUTE_VAISSEAU+drone_Y_livraison)
 
+typedef struct {
+  int posYDrone;
+  char colis[LARGEUR_ID_COLIS +1];
+} IPCDrone;
+typedef unsigned short ushort;
+
   //int shmD[NBDRONES]; //liste des mémoires partagées des drones
 
+  
+struct sembuf sem_oper_P ;  /* Operation P */
+struct sembuf sem_oper_V ;  /* Operation V */
+
+
+ void P(int sem_id) {
+
+sem_oper_P.sem_num = 0;
+sem_oper_P.sem_op  = -1 ;
+sem_oper_P.sem_flg = 0 ;
+semop(sem_id, &sem_oper_P, 1);
+}
+
+void V(int sem_id) {
+
+sem_oper_V.sem_num = 0;
+sem_oper_V.sem_op  = 1 ;
+sem_oper_V.sem_flg  = 0 ;
+semop(sem_id, &sem_oper_V, 1);
+} 
+  
+  
 #endif
