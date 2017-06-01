@@ -137,6 +137,9 @@ void main()
   shmdt(shmEnd);
   shmctl(shmEndId, IPC_RMID, NULL);
   
+  semctl(semEnd, 0, IPC_RMID, NULL);
+  
+  
   FOR(x,NBDRONES)
   {
      shmdt(shmD[x]);
