@@ -17,7 +17,6 @@
 
 #define FOR(p, F) for(int p = 0; p<F; ++p)
 
-
 Tableau** initWorld();
 int initsem();
 void finish(int i);
@@ -41,6 +40,19 @@ void finish(int i);
   Tableau **T;
   
   int nbDroneTravail = NBDRONES; // !!!!!!!!!!!!!!!!!!!!!!!! en nominial, ça vaut le nombre de drones !
+
+Colis* genereColis(){
+  static int i = 0;
+  Colis* c = malloc(sizeof(Colis));
+  
+    
+  c->id = i++;
+  c->prio = rand()/(RAND_MAX/2);
+  c->trajet = rand()/(RAND_MAX/(TRAJET_MAX - TRAJET_MIN))+TRAJET_MIN;
+  
+  
+  return c;
+}
 
 void drawUnivers(int i)
 {
@@ -72,6 +84,11 @@ char* itoa(int i){
 
 void main()
 {	  
+
+  
+  
+  //INIT MEMOIRE PARTAGEE
+  //parametre des drones
   FOR(x,NBDRONES)
 	{
 		shmDId[x] = shmget(IPC_PRIVATE, sizeof(IPCDrone), 0666|IPC_CREAT);
@@ -82,18 +99,35 @@ void main()
     
 	}
   
+  //controle de fin de logiciel, pricipalement pour initier le netoyage des IPC
   shmEndId = shmget(IPC_PRIVATE, sizeof(int), 0666|IPC_CREAT);
   if(shmEndId <0)
       puts("echec creation memoire partagee pour la fin du programme");
   shmEnd = shmat(shmEndId, NULL, 0);
   *shmEnd = NBDRONES;
   
-  //init semaphore
+  //INIT SEMAPHORE  -- controle de la fin de logiciel
   int semEnd = initsem();
   pint(semctl(semEnd, 0, GETVAL, 0), "semEnd");
   
-  
 	T = initWorld();	//dessine l'univer
+  
+  
+  //INIT FILE MESSAGE 
+  // contient la cargaison du vaisseau
+  int msgCarId = msgget(IPC_PRIVATE, 0666|IPC_CREAT);
+  srand(time(NULL)); //préparation aux chiffres aléatoires
+  FOR(y, PROFONDEUR_SOUTE_VAISSEAU)
+  FOR(x, LARGEUR_VAISSEAU){
+    Colis *c = genereColis();
+    setData(T[NBDRONES], x, y, itoa(c->id));  //On remplie la soute
+    msgsnd(msgCarId, (void*)c, sizeof(Colis), c->prio);
+    
+  }
+  
+  
+  
+
 	draw(T, nbTableaux);
    
   
@@ -101,7 +135,7 @@ void main()
   FOR(x, NBDRONES){
     pid[x]= fork();
     if(pid[x] == 0){ //Fils n°x ------------------- RECOUVREMENT DRONE ------------------------------//
-      execlp("drone/drone.elf", "drone.elf", itoa(shmDId[x]), itoa(shmEndId), itoa(semEnd), (char*)0);
+      execlp("drone/drone.elf", "drone.elf", itoa(shmDId[x]), itoa(shmEndId), itoa(semEnd), itoa(msgCarId), (char*)0);
       exit(5);
     }
   }
@@ -132,8 +166,9 @@ void main()
     /*pause();*/
     /*}*/
  // wait(NULL);
-  pint(semctl(semEnd, 0, GETVAL, 0), "semEnd");
+ // pint(semctl(semEnd, 0, GETVAL, 0), "semEnd");
 
+ //msgget, msgctl
   shmdt(shmEnd);
   shmctl(shmEndId, IPC_RMID, NULL);
   
@@ -147,6 +182,9 @@ void main()
      shmctl(shmDId[x], IPC_RMID, NULL);
   }
 	
+  msgctl(msgCarId, IPC_RMID, NULL);
+  
+  
 }
 
 int initsem() 
