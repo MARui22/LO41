@@ -1,5 +1,5 @@
 export CC=gcc
-export CFLAGS=-std=c99 -lpthread
+export CFLAGS=-std=c99 -lpthread -g
 export LDFLAGS=
 
 SRC= $(wildcard gui/*.c)

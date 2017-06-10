@@ -7,8 +7,8 @@
 #include <sys/types.h>
 #include <sys/msg.h>
 
-#define NBDRONES 10
-#define LARGEUR_VAISSEAU 15
+#define NBDRONES 5
+#define LARGEUR_VAISSEAU 5
 #define PROFONDEUR_SOUTE_VAISSEAU 2
 #define LARGEUR_ID_COLIS 4
 #define GENERAL_OFFSET_LEFT 10
@@ -22,10 +22,14 @@
 #define drone_Y_atterissage (10+2*PROFONDEUR_SOUTE_VAISSEAU)
 #define drone_Y_livraison (28+2*PROFONDEUR_SOUTE_VAISSEAU)
 #define drone_Y_dead (8+2*PROFONDEUR_SOUTE_VAISSEAU+drone_Y_livraison)
+#define drone_Y_repos PROFONDEUR_SOUTE_VAISSEAU
+
+enum droneState {RECHARGE =1, ATTENTE_DEPART=2, ALLER=4, ATTENTE_LIVRAISON=8, RETOUR=16, ATTENTE_ATTERRISSAGE=32, DEAD=64};
 
 typedef struct {
-  int posYDrone;
+  enum droneState state;
   char colis[LARGEUR_ID_COLIS +1];
+  int id_colis;
 } IPCDrone;
 typedef unsigned short ushort;
 
@@ -51,16 +55,16 @@ struct sembuf sem_oper_P ;  /* Operation P */
 struct sembuf sem_oper_V ;  /* Operation V */
 
 
- void P(int sem_id) {
-sem_oper_P.sem_num = 0;
+ void P(int sem_id, int numShm) {
+sem_oper_P.sem_num = numShm;
 sem_oper_P.sem_op  = -1 ;
 sem_oper_P.sem_flg = 0 ;
 semop(sem_id, &sem_oper_P, 1);
 }
 
-void V(int sem_id) {
+void V(int sem_id, int numShm) {
 
-sem_oper_V.sem_num = 0;
+sem_oper_V.sem_num = numShm;
 sem_oper_V.sem_op  = 1 ;
 sem_oper_V.sem_flg  = 0 ;
 semop(sem_id, &sem_oper_V, 1);

@@ -11,6 +11,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include <math.h>
 #include <signal.h>
 
 #include "./gui/gui.h"
@@ -22,6 +23,7 @@
 #define index_cargaison NBDRONES
 #define index_drone_charge (NBDRONES+1)
 #define index_drone_decollage (NBDRONES+2)
+#define index_maison (NBDRONES+5)
 
 Tableau** initWorld();
 int initsem();
@@ -63,28 +65,101 @@ msgColis *genereMsgColis()
 void drawUnivers(int i)
 {
    signal(SIGUSR1, SIG_IGN);
+   int index_num_livraison = 0;
   
-
+/*RECHARGE, ATTENTE_DEPART, ALLER, ATTENTE_LIVRAISON, RETOUR, ATTENTE_ATTERRISSAGE, DEAD};*/
+  int pos, num=2;  
   
   FOR(x, NBDRONES){
-  
-  //- on récupere le numéro de colis du drone
   char* ncolis = shmD[x]->colis;
-  if(strlen(ncolis)>2)
-  {
-    char* idc = calloc(12, sizeof(char));
-    int i = 2;
-    while(ncolis[i] != '\0')
-      idc[i-2] = ncolis[i++];
+  
+  /*on gère au cas par drone :*/
+  enum droneState ds = shmD[x]->state ;
     
-      i = atoi(idc); // i contient le numéro de colis
-    //supprimons le colis n°i de la cargaison :
-      setData(T[index_cargaison], i%LARGEUR_VAISSEAU,i/LARGEUR_VAISSEAU, "");
-}
-  //on place le colis dans le drone:    
-    setData(T[x], 0,0, ncolis);
-    *(T[x]->Y) = shmD[x]->posYDrone;
+  if(ds & (RECHARGE|ATTENTE_DEPART))
+  {   
+    pos=drone_Y_repos;
+    if(ds & ATTENTE_DEPART)//- on récupere le numéro de colis du drone pour le suprimer de la cargaison
+    {
+          
+      if(strlen(ncolis)>2)
+      {
+        char* idc = calloc(12, sizeof(char));
+        while(ncolis[num] != '\0')
+          idc[num-2] = ncolis[num++];
+        
+          num = atoi(idc); // num contient le numéro de colis
+        //supprimons le colis n°num de la cargaison :
+          setData(T[index_cargaison], num%LARGEUR_VAISSEAU,num/LARGEUR_VAISSEAU, "");
+        
+        //on place le colis dans le drone n°x:    
+          setData(T[x], 0,0, ncolis);
+      }
+      setData(T[index_drone_decollage], x, 0, T[x]->titre);
+      setData(T[index_drone_charge], x, 0, " ");
+    }
+    else
+      setData(T[index_drone_charge], x, 0, T[x]->titre);
   }
+  else if(ds & ATTENTE_ATTERRISSAGE )
+  {  pos=drone_Y_atterissage;
+  
+  }
+  else if(ds & (ALLER | RETOUR))
+  {  pos=drone_Y_voyage;
+  
+  puts("aller ou retour");
+  
+    if(ds & RETOUR)//- on place le colis dans une maison
+    {
+      printf("|%s|", getData(T[x], 0,0));
+      puts(T[x]->titre);
+
+      pint(ds, "etat");
+      pint(strlen(ncolis), "longueur id");
+      
+      puts("retour");
+      
+      
+    //on place le colis du drone dans la maison
+        
+    
+      if(shmD[x]->id_colis !=-1)
+      {
+        
+          index_num_livraison = shmD[x]->id_colis; // num contient le numéro de colis
+      
+    pint((index_num_livraison-index_num_livraison%LARGEUR_VAISSEAU)/LARGEUR_VAISSEAU, "maisons !!");
+    pint((index_num_livraison-index_num_livraison/LARGEUR_VAISSEAU)/LARGEUR_VAISSEAU, "maisons !!");
+      setData(T[index_maison], index_num_livraison%LARGEUR_VAISSEAU,(index_num_livraison)/LARGEUR_VAISSEAU,
+          ncolis);
+          
+          shmD[x]->id_colis = -1;
+      }
+
+    /*getData(T[x], 0,0)*/
+    //on clean le colis de l'affichage du drone
+      setData(T[x], 0,0, " ");
+    }
+    else
+    {
+      setData(T[index_drone_decollage], x, 0, " ");
+    }
+  
+  
+  }
+  else if(ds |ATTENTE_LIVRAISON)
+  {  pos=drone_Y_livraison;
+  
+  }
+  else
+  {  pos=drone_Y_dead;
+  
+  }
+    /*on place la hauteur du drone */
+    *(T[x]->Y) = pos;
+      
+  } //fin de l'actualisation des drones
   
   draw(T,nbTableaux);  
   signal(SIGUSR1, drawUnivers);
@@ -180,20 +255,24 @@ void main()
   
   while(loop)
   {
-    P(semEnd);
+    P(semEnd, 0);
     if(*shmEnd != 0)
     {
-      V(semEnd);
+      V(semEnd, 0);
       sleep(1);
     }else{
-      V(semEnd);
+      V(semEnd, 0);
       loop = 0;
     }
   }
 
+
+  
+
   drawUnivers(0);
 
-
+  sleep(1);
+  
  //msgget, msgctl
   shmdt(shmEnd);
   shmctl(shmEndId, IPC_RMID, NULL);
@@ -223,9 +302,9 @@ int initsem()
 		struct semid_ds *stat;
 		ushort * array;
 	} ctl_arg;
-    if ((semid_init = semget(IPC_PRIVATE, 1, 0666|IPC_CREAT)) > 0) {
+    if ((semid_init = semget(IPC_PRIVATE, 2, 0666|IPC_CREAT)) > 0) {
 		
-	    	ushort array[1] = {1};
+	    	ushort array[2] = {1,0};
 	    	ctl_arg.array = array;
 	    	status = semctl(semid_init, 0, SETALL, ctl_arg);
     }
@@ -281,8 +360,6 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
     setPos(T[x], GENERAL_OFFSET_LEFT + x*(LARGEUR_ID_COLIS+1), drone_Y_dead );
   }
   
-	strcpy(shmD[0]->colis,"4|40");
-	strcpy(shmD[1]->colis,"4|41");
 
   int lereste = NBDRONES;
 	T[lereste++] = vaisseau;
@@ -292,12 +369,6 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
 	T[lereste++] = limiteVoyageLivraison;
 	T[lereste++] = client;
   T[lereste++] = limiteDead;
-	
-	setData(vaisseau, 2,1,"3|00");
-	setData(client, 2,1,"4|39");
-	setData(departDrone, 3,0,"d4");
-	setData(stockDrone, 4,0,"d5");
-	setData(stockDrone, 5,0,"d6");	
 	
 	return T;
 }

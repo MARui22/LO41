@@ -16,6 +16,9 @@
 #include "../const.h"
 
 #define FOR(p, F) for(int p = 0; p<F; ++p)
+
+//enum droneState {RECHARGE, ATTENTE_DEPART, ALLER, ATTENTE_LIVRAISON, RETOUR, ATTENTE_ATTERRISSAGE, DEAD};
+
 char* itoa2(int i, char* str){
   /*char* str = calloc(12, sizeof(char));*/
   sprintf(str, "%d", i);
@@ -44,47 +47,56 @@ int a = 0;
      char* tmp = calloc(12,sizeof(char)), *reset = calloc(LARGEUR_ID_COLIS +1, sizeof(char));//itoa2(colis->colis.id);
   
   msgColis* colis = malloc(sizeof(msgColis));
+  int cargo_non_vide = 1;
   
-  while(msgrcv(msgCar, (void*)colis , sizeof(msgColis)-4, -3  ,IPC_NOWAIT) !=-1 )
+  while(1)
 {
-  /*char* c = malloc(sizeof(char));*/
-  
-  /*msgrcv(msgCar, (void*)c, sizeof(msgTest), 0  , 0);*/
-  /*pint(colis->colis.prio, "prio");*/
-  /*pint(colis->colis.trajet, "trajet");*/
-  /*pint(colis->colis.id, "id");*/
-  /*pint(c->test, "test");*/
-  //tmp = strcast(itoa2(colis->colis.id, tmp), "|")
-   
+/*char* c = malloc(sizeof(char));*/
+    
+  /////// RECHARGE ////////////
+  shmD->state = RECHARGE;
+   kill(getppid(), SIGUSR1);
   sleep(colis->colis.trajet);
-  shmD->posYDrone = drone_Y_voyage;  //on passe le drone dans la zone "voyage" de l'écran
+  
+  ////// PRENDRE UN COLIS -- ATTENDE LE DEPART  ///////////////
+  if( msgrcv(msgCar, (void*)colis , sizeof(msgColis)-4, -3  ,IPC_NOWAIT) == -1 )
+    break;
   strcpy(shmD->colis, reset);
   strcat(shmD->colis, (itoa2(colis->colis.prio, tmp)));
   strcat(shmD->colis, "|");
   strcat(shmD->colis, (itoa2(colis->colis.id, tmp)));
-  
+  shmD->id_colis = colis->colis.id;
+  shmD->state = ATTENTE_DEPART;  //on passe le drone dans la zone "voyage" de l'écran  
   kill(getppid(), SIGUSR1);
+  sleep(colis->colis.trajet);
+  
+  //////  ALLER -- FAIRE LE TRAJET  //////////
+  shmD->state= ALLER; //on passe le drone dans la zone "livraison" de l'écran
+  kill(getppid(), SIGUSR1);
+  sleep(colis->colis.trajet);
 
-  sleep(colis->colis.trajet);
-  shmD->posYDrone = drone_Y_livraison; //on passe le drone dans la zone "livraison" de l'écran
+  //////  ATTENTE_LIVRAISON //////////////////////
+  shmD->state= ATTENTE_LIVRAISON;
   kill(getppid(), SIGUSR1);
-  
   sleep(colis->colis.trajet);
-  shmD->posYDrone = drone_Y_atterissage;
-  strcpy(shmD->colis, "  "); //on décharge le colis !!! ATTENTION !!! TOUJOURS utiliser strcpy(), car un "=" fait sauter la référence à la mémoire partagée !!!!!!
+   
+  /////  RETOUR--voyage retour  //////////////////
+  shmD->state= RETOUR;
   kill(getppid(), SIGUSR1);
-  
-  
   sleep(colis->colis.trajet);
-  shmD->posYDrone = drone_Y_dead;  //on passe le drone dans la zone "mort" de l'écran
-
+  
+  /////   ATTENTE_ATTERRISSAGE  ////////////////////
+  shmD->state= ATTENTE_ATTERRISSAGE; 
   kill(getppid(), SIGUSR1);
+  sleep(colis->colis.trajet);
+  
+  
 }
   
-  P(semEnd);
+  P(semEnd, 0);
   *shmEnd = *shmEnd -1; 
   
-  V(semEnd);
+  V(semEnd, 0);
   
   shmdt(shmD);
   shmdt(shmEnd);
