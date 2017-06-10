@@ -191,6 +191,7 @@ void main()
     }
   }
 
+  drawUnivers(0);
 
 
  //msgget, msgctl

@@ -41,13 +41,13 @@ int a = 0;
    int semEnd = atoi(argv[3]);
    int msgCar = atoi(argv[4]);
    
-     char* tmp = calloc(12,sizeof(char));//itoa2(colis->colis.id);
+     char* tmp = calloc(12,sizeof(char)), *reset = calloc(LARGEUR_ID_COLIS +1, sizeof(char));//itoa2(colis->colis.id);
+  
   msgColis* colis = malloc(sizeof(msgColis));
-  msgrcv(msgCar, (void*)colis , sizeof(msgColis)-4, -3  , 0);
-  /*msgTest* c  = malloc(sizeof(msgTest ));*/
   
-  
-  
+  while(msgrcv(msgCar, (void*)colis , sizeof(msgColis)-4, -3  ,IPC_NOWAIT) !=-1 )
+{
+  /*char* c = malloc(sizeof(char));*/
   
   /*msgrcv(msgCar, (void*)c, sizeof(msgTest), 0  , 0);*/
   /*pint(colis->colis.prio, "prio");*/
@@ -58,7 +58,7 @@ int a = 0;
    
   sleep(colis->colis.trajet);
   shmD->posYDrone = drone_Y_voyage;  //on passe le drone dans la zone "voyage" de l'écran
-  strcpy(shmD->colis, "");
+  strcpy(shmD->colis, reset);
   strcat(shmD->colis, (itoa2(colis->colis.prio, tmp)));
   strcat(shmD->colis, "|");
   strcat(shmD->colis, (itoa2(colis->colis.id, tmp)));
@@ -79,6 +79,7 @@ int a = 0;
   shmD->posYDrone = drone_Y_dead;  //on passe le drone dans la zone "mort" de l'écran
 
   kill(getppid(), SIGUSR1);
+}
   
   P(semEnd);
   *shmEnd = *shmEnd -1; 
