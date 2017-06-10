@@ -1,3 +1,4 @@
+
 #define _POSIX_SOURCE
 #define _XOPEN_SOURCE
 
@@ -16,6 +17,11 @@
 #include "const.h"
 
 #define FOR(p, F) for(int p = 0; p<F; ++p)
+
+
+#define index_cargaison NBDRONES
+#define index_drone_charge (NBDRONES+1)
+#define index_drone_decollage (NBDRONES+2)
 
 Tableau** initWorld();
 int initsem();
@@ -53,22 +59,30 @@ msgColis *genereMsgColis()
   return m;
 }
 
-msgTest *genereMsgTest()
-{
-  msgTest*m = malloc(sizeof(msgTest));
-  m->test = 456;
-  m->type = 1;
-  
-  return m;
-}
 
 void drawUnivers(int i)
 {
    signal(SIGUSR1, SIG_IGN);
-   
+  
+
   
   FOR(x, NBDRONES){
-    setData(T[x], 0,0, shmD[x]->colis);
+  
+  //- on récupere le numéro de colis du drone
+  char* ncolis = shmD[x]->colis;
+  if(strlen(ncolis)>2)
+  {
+    char* idc = calloc(12, sizeof(char));
+    int i = 2;
+    while(ncolis[i] != '\0')
+      idc[i-2] = ncolis[i++];
+    
+      i = atoi(idc); // i contient le numéro de colis
+    //supprimons le colis n°i de la cargaison :
+      setData(T[index_cargaison], i%LARGEUR_VAISSEAU,i/LARGEUR_VAISSEAU, "");
+}
+  //on place le colis dans le drone:    
+    setData(T[x], 0,0, ncolis);
     *(T[x]->Y) = shmD[x]->posYDrone;
   }
   
@@ -134,7 +148,7 @@ void main()
       strcat(buff, itoa(c->colis.prio));
   strcat(buff, "|");
   strcat(buff, itoa(c->colis.id));
-    setData(T[NBDRONES], x, y,buff);  //On remplie la soute
+    setData(T[index_cargaison], x, y,buff);  //On remplie la soute
     msgsnd(msgCarId, (void*)c, sizeof(msgColis)-4, 0);
     /*msgTest *t = genereMsgTest();*/
     /*msgsnd(msgCarId, (void*)t, sizeof(msgTest), 0);*/

@@ -43,7 +43,7 @@ int a = 0;
    
      char* tmp = calloc(12,sizeof(char));//itoa2(colis->colis.id);
   msgColis* colis = malloc(sizeof(msgColis));
-  msgrcv(msgCar, (void*)colis , sizeof(msgColis)-4, 0  , 0);
+  msgrcv(msgCar, (void*)colis , sizeof(msgColis)-4, -3  , 0);
   /*msgTest* c  = malloc(sizeof(msgTest ));*/
   
   
@@ -53,7 +53,6 @@ int a = 0;
   /*pint(colis->colis.prio, "prio");*/
   /*pint(colis->colis.trajet, "trajet");*/
   /*pint(colis->colis.id, "id");*/
-  /*puts("chaek");*/
   /*pint(c->test, "test");*/
   //tmp = strcast(itoa2(colis->colis.id, tmp), "|")
    
