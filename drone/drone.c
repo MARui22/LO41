@@ -16,10 +16,20 @@
 #include "../const.h"
 
 #define FOR(p, F) for(int p = 0; p<F; ++p)
-char* itoa(int i){
-  char* str = calloc(12, sizeof(char));
+char* itoa2(int i, char* str){
+  /*char* str = calloc(12, sizeof(char));*/
   sprintf(str, "%d", i);
   return str;
+}
+
+void myStrcpy(char*i, char*c)
+{
+int a = 0;
+  while(*c!='\0')
+  {
+    i[a] = c[a++];
+    
+  }
 }
 
  void main(int argc, char *argv[]){
@@ -31,26 +41,42 @@ char* itoa(int i){
    int semEnd = atoi(argv[3]);
    int msgCar = atoi(argv[4]);
    
-     
-  Colis* colis = malloc(sizeof(Colis));
-  msgrcv(msgCar, (void*)colis , sizeof(Colis), 0  , 0);
+     char* tmp = calloc(12,sizeof(char));//itoa2(colis->colis.id);
+  msgColis* colis = malloc(sizeof(msgColis));
+  msgrcv(msgCar, (void*)colis , sizeof(msgColis)-4, 0  , 0);
+  /*msgTest* c  = malloc(sizeof(msgTest ));*/
+  
+  
+  
+  
+  /*msgrcv(msgCar, (void*)c, sizeof(msgTest), 0  , 0);*/
+  /*pint(colis->colis.prio, "prio");*/
+  /*pint(colis->colis.trajet, "trajet");*/
+  /*pint(colis->colis.id, "id");*/
+  /*puts("chaek");*/
+  /*pint(c->test, "test");*/
+  //tmp = strcast(itoa2(colis->colis.id, tmp), "|")
    
-  sleep(colis->trajet);
+  sleep(colis->colis.trajet);
   shmD->posYDrone = drone_Y_voyage;  //on passe le drone dans la zone "voyage" de l'écran
+  strcpy(shmD->colis, "");
+  strcat(shmD->colis, (itoa2(colis->colis.prio, tmp)));
+  strcat(shmD->colis, "|");
+  strcat(shmD->colis, (itoa2(colis->colis.id, tmp)));
+  
   kill(getppid(), SIGUSR1);
-  strcpy(shmD->colis, itoa(colis->id));
 
-  sleep(colis->trajet);
+  sleep(colis->colis.trajet);
   shmD->posYDrone = drone_Y_livraison; //on passe le drone dans la zone "livraison" de l'écran
   kill(getppid(), SIGUSR1);
   
-  sleep(colis->trajet);
+  sleep(colis->colis.trajet);
   shmD->posYDrone = drone_Y_atterissage;
   strcpy(shmD->colis, "  "); //on décharge le colis !!! ATTENTION !!! TOUJOURS utiliser strcpy(), car un "=" fait sauter la référence à la mémoire partagée !!!!!!
   kill(getppid(), SIGUSR1);
   
   
-  sleep(colis->trajet);
+  sleep(colis->colis.trajet);
   shmD->posYDrone = drone_Y_dead;  //on passe le drone dans la zone "mort" de l'écran
 
   kill(getppid(), SIGUSR1);

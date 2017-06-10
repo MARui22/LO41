@@ -34,7 +34,16 @@ typedef struct {
   int prio;
   int trajet;
   } Colis;
+  
+  typedef struct {
+  long type;
+  int test;
+  }msgTest;
 
+typedef struct {
+  long type;
+  Colis colis;
+  }msgColis;
   //int shmD[NBDRONES]; //liste des mémoires partagées des drones
 
   

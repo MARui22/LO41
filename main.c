@@ -22,15 +22,6 @@ int initsem();
 void finish(int i);
 
 
-/*#define NBDRONES 3*/
-/*#define LARGEUR_VAISSEAU 15*/
-/*#define PROFONDEUR_SOUTE_VAISSEAU 2*/
-/*#define LARGEUR_ID_COLIS 4*/
-/*#define GENERAL_OFFSET_LEFT 10*/
-	/**/
-	/*int nbTableaux = 0; //6 + nombre de drones	*/
-	/*int drone_Y_atterissage, drone_Y_voyage, drone_Y_livraison, drone_Y_dead;*/
-/**/
   int shmDId[NBDRONES];
   int shmEndId;
   
@@ -41,17 +32,34 @@ void finish(int i);
   
   int nbDroneTravail = NBDRONES; // !!!!!!!!!!!!!!!!!!!!!!!! en nominial, ça vaut le nombre de drones !
 
-Colis* genereColis(){
+Colis genereColis(){
   static int i = 0;
-  Colis* c = malloc(sizeof(Colis));
+  Colis c;
   
     
-  c->id = i++;
-  c->prio = rand()/(RAND_MAX/2);
-  c->trajet = rand()/(RAND_MAX/(TRAJET_MAX - TRAJET_MIN))+TRAJET_MIN;
-  
-  
+  c.id = i++;
+  c.prio = rand()/(RAND_MAX/3)+1;
+  c.trajet = rand()/(RAND_MAX/(TRAJET_MAX - TRAJET_MIN))+TRAJET_MIN;
+   
   return c;
+}
+
+msgColis *genereMsgColis()
+{
+  msgColis *m = malloc(sizeof(msgColis));
+  m->colis = genereColis();
+  m->type = m->colis.prio;
+  
+  return m;
+}
+
+msgTest *genereMsgTest()
+{
+  msgTest*m = malloc(sizeof(msgTest));
+  m->test = 456;
+  m->type = 1;
+  
+  return m;
 }
 
 void drawUnivers(int i)
@@ -119,10 +127,17 @@ void main()
   srand(time(NULL)); //préparation aux chiffres aléatoires
   FOR(y, PROFONDEUR_SOUTE_VAISSEAU)
   FOR(x, LARGEUR_VAISSEAU){
-    Colis *c = genereColis();
-    setData(T[NBDRONES], x, y, itoa(c->id));  //On remplie la soute
-    msgsnd(msgCarId, (void*)c, sizeof(Colis), c->prio);
+    msgColis *c = genereMsgColis();
     
+    char*buff = calloc(LARGEUR_ID_COLIS+1, sizeof(char));
+    
+      strcat(buff, itoa(c->colis.prio));
+  strcat(buff, "|");
+  strcat(buff, itoa(c->colis.id));
+    setData(T[NBDRONES], x, y,buff);  //On remplie la soute
+    msgsnd(msgCarId, (void*)c, sizeof(msgColis)-4, 0);
+    /*msgTest *t = genereMsgTest();*/
+    /*msgsnd(msgCarId, (void*)t, sizeof(msgTest), 0);*/
   }
   
   
@@ -162,11 +177,7 @@ void main()
     }
   }
 
-  /*while(nbDroneTravail){*/
-    /*pause();*/
-    /*}*/
- // wait(NULL);
- // pint(semctl(semEnd, 0, GETVAL, 0), "semEnd");
+
 
  //msgget, msgctl
   shmdt(shmEnd);
