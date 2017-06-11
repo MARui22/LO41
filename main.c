@@ -108,19 +108,9 @@ void drawUnivers(int i)
   else if(ds & (ALLER | RETOUR))
   {  pos=drone_Y_voyage;
   
-  puts("aller ou retour");
   
     if(ds & RETOUR)//- on place le colis dans une maison
-    {
-      printf("|%s|", getData(T[x], 0,0));
-      puts(T[x]->titre);
-
-      pint(ds, "etat");
-      pint(strlen(ncolis), "longueur id");
-      
-      puts("retour");
-      
-      
+    {      
     //on place le colis du drone dans la maison
         
     
@@ -129,10 +119,9 @@ void drawUnivers(int i)
         
           index_num_livraison = shmD[x]->id_colis; // num contient le numéro de colis
       
-    pint((index_num_livraison-index_num_livraison%LARGEUR_VAISSEAU)/LARGEUR_VAISSEAU, "maisons !!");
-    pint((index_num_livraison-index_num_livraison/LARGEUR_VAISSEAU)/LARGEUR_VAISSEAU, "maisons !!");
-      setData(T[index_maison], index_num_livraison%LARGEUR_VAISSEAU,(index_num_livraison)/LARGEUR_VAISSEAU,
-          ncolis);
+    
+          setData(T[index_maison], index_num_livraison%LARGEUR_VAISSEAU,(index_num_livraison)/LARGEUR_VAISSEAU,
+            ncolis);
           
           shmD[x]->id_colis = -1;
       }
@@ -205,7 +194,7 @@ void main()
   
   //INIT SEMAPHORE  -- controle de la fin de logiciel
   int semEnd = initsem();
-  pint(semctl(semEnd, 0, GETVAL, 0), "semEnd");
+
   
 	T = initWorld();	//dessine l'univer
   
@@ -340,7 +329,13 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
 	//délimitation des zones aériennes (attente atterissage / voyage / attente livraison)
 	Label * limiteAtterrissageVoyage = createLabel("En attente d'atterrissage\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\nEn voyage", 0,*departDrone->Y+4+5);
 	Label * limiteVoyageLivraison = createLabel("En voyage\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\nEn attente de livraison", 0,*limiteAtterrissageVoyage->Y+4+5);
-	Label * limiteDead = createLabel("Dead\t\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501", 0,
+	
+  char lineOfDead[vaisseau->Lchar];
+  strcpy(lineOfDead, "Dead\t");
+  FOR(osef, vaisseau->Lchar/3-10)
+    strcat(lineOfDead, "\u2501");
+    
+  Label * limiteDead = createLabel(lineOfDead, 0,
       *limiteVoyageLivraison->Y+4 + 5+2*PROFONDEUR_SOUTE_VAISSEAU+2+4);
 	
   setPos(client, GENERAL_OFFSET_LEFT,*limiteVoyageLivraison->Y+4 + 5);	

@@ -7,8 +7,8 @@
 #include <sys/types.h>
 #include <sys/msg.h>
 
-#define NBDRONES 5
-#define LARGEUR_VAISSEAU 5
+#define NBDRONES 33
+#define LARGEUR_VAISSEAU 50
 #define PROFONDEUR_SOUTE_VAISSEAU 2
 #define LARGEUR_ID_COLIS 4
 #define GENERAL_OFFSET_LEFT 10
