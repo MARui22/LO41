@@ -1,5 +1,7 @@
-#define _XOPEN_SOURCE
-#define _POSIX_SOURCE
+#define _POSIX_SOURCE //199309L
+#define _XOPEN_SOURCE 
+#define _XOPEN_SOURCE_EXTENDED
+#define _BSD_SOURCE 500
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
@@ -10,6 +12,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <time.h>
 
 
 #include "../gui/gui.h"
@@ -17,6 +20,12 @@
 
 #define FOR(p, F) for(int p = 0; p<F; ++p)
 
+
+int millisleep(unsigned ms)
+{
+  return usleep(1000 * ms);
+}
+               
 //enum droneState {RECHARGE, ATTENTE_DEPART, ALLER, ATTENTE_LIVRAISON, RETOUR, ATTENTE_ATTERRISSAGE, DEAD};
 
 char* itoa2(int i, char* str){
@@ -46,52 +55,56 @@ int a = 0;
    
      char* tmp = calloc(12,sizeof(char)), *reset = calloc(LARGEUR_ID_COLIS +1, sizeof(char));//itoa2(colis->colis.id);
   
+  /*struct timespec ts;*/
+  
   msgColis* colis = malloc(sizeof(msgColis));
+  /*ms2ts(&ts, colis->colis.trajet*1000);*/
+  
   int cargo_non_vide = 1;
   
-  while(1)
-{
-/*char* c = malloc(sizeof(char));*/
+    while(1)
+  {
+  /*char* c = malloc(sizeof(char));*/
+      
+    /////// RECHARGE ////////////
+    shmD->state = RECHARGE;
+     kill(getppid(), SIGCONT);
+    millisleep(colis->colis.trajet);
     
-  /////// RECHARGE ////////////
-  shmD->state = RECHARGE;
-   kill(getppid(), SIGUSR1);
-  sleep(colis->colis.trajet);
-  
-  ////// PRENDRE UN COLIS -- ATTENDE LE DEPART  ///////////////
-  if( msgrcv(msgCar, (void*)colis , sizeof(msgColis)-4, -3  ,IPC_NOWAIT) == -1 )
-    break;
-  strcpy(shmD->colis, reset);
-  strcat(shmD->colis, (itoa2(colis->colis.prio, tmp)));
-  strcat(shmD->colis, "|");
-  strcat(shmD->colis, (itoa2(colis->colis.id, tmp)));
-  shmD->id_colis = colis->colis.id;
-  shmD->state = ATTENTE_DEPART;  //on passe le drone dans la zone "voyage" de l'écran  
-  kill(getppid(), SIGUSR1);
-  sleep(colis->colis.trajet);
-  
-  //////  ALLER -- FAIRE LE TRAJET  //////////
-  shmD->state= ALLER; //on passe le drone dans la zone "livraison" de l'écran
-  kill(getppid(), SIGUSR1);
-  sleep(colis->colis.trajet);
+    ////// PRENDRE UN COLIS -- ATTENDE LE DEPART  ///////////////
+    if( msgrcv(msgCar, (void*)colis , sizeof(msgColis)-4, -3  ,IPC_NOWAIT) == -1 )
+      break;
+    strcpy(shmD->colis, reset);
+    strcat(shmD->colis, (itoa2(colis->colis.prio, tmp)));
+    strcat(shmD->colis, "|");
+    strcat(shmD->colis, (itoa2(colis->colis.id, tmp)));
+    shmD->id_colis = colis->colis.id;
+    shmD->state = ATTENTE_DEPART;  //on passe le drone dans la zone "voyage" de l'écran  
+    kill(getppid(), SIGCONT);
+    millisleep(colis->colis.trajet)  ;    
+    
+    //////  ALLER -- FAIRE LE TRAJET  //////////
+    shmD->state= ALLER; //on passe le drone dans la zone "livraison" de l'écran
+    kill(getppid(), SIGCONT);
+    millisleep(colis->colis.trajet);
 
-  //////  ATTENTE_LIVRAISON //////////////////////
-  shmD->state= ATTENTE_LIVRAISON;
-  kill(getppid(), SIGUSR1);
-  sleep(colis->colis.trajet);
-   
-  /////  RETOUR--voyage retour  //////////////////
-  shmD->state= RETOUR;
-  kill(getppid(), SIGUSR1);
-  sleep(colis->colis.trajet);
-  
-  /////   ATTENTE_ATTERRISSAGE  ////////////////////
-  shmD->state= ATTENTE_ATTERRISSAGE; 
-  kill(getppid(), SIGUSR1);
-  sleep(colis->colis.trajet);
-  
-  
-}
+    //////  ATTENTE_LIVRAISON //////////////////////
+    shmD->state= ATTENTE_LIVRAISON;
+    kill(getppid(), SIGCONT);
+    millisleep(colis->colis.trajet);
+    
+    /////  RETOUR--voyage retour  //////////////////
+    shmD->state= RETOUR;
+    kill(getppid(), SIGCONT);
+    millisleep(colis->colis.trajet);
+    
+    /////   ATTENTE_ATTERRISSAGE  ////////////////////
+    shmD->state= ATTENTE_ATTERRISSAGE; 
+    kill(getppid(), SIGCONT);
+    millisleep(colis->colis.trajet);
+    
+    
+  }
   
   P(semEnd, 0);
   *shmEnd = *shmEnd -1; 

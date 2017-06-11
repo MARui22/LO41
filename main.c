@@ -1,6 +1,6 @@
 
 #define _POSIX_SOURCE
-#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE 
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +47,7 @@ Colis genereColis(){
     
   c.id = i++;
   c.prio = rand()/(RAND_MAX/3)+1;
-  c.trajet = rand()/(RAND_MAX/(TRAJET_MAX - TRAJET_MIN))+TRAJET_MIN;
+  c.trajet = rand()/(RAND_MAX/(TRAJET_MAX*1000 - 1000*TRAJET_MIN))+TRAJET_MIN*1000;
    
   return c;
 }
@@ -64,7 +64,7 @@ msgColis *genereMsgColis()
 
 void drawUnivers(int i)
 {
-   signal(SIGUSR1, SIG_IGN);
+   /*signal(SIGUSR1, SIG_IGN);*/
    int index_num_livraison = 0;
   
 /*RECHARGE, ATTENTE_DEPART, ALLER, ATTENTE_LIVRAISON, RETOUR, ATTENTE_ATTERRISSAGE, DEAD};*/
@@ -151,16 +151,22 @@ void drawUnivers(int i)
   } //fin de l'actualisation des drones
   
   draw(T,nbTableaux);  
-  signal(SIGUSR1, drawUnivers);
+  /*signal(SIGUSR1, drawUnivers);*/
+  
+    
+  //Gestion de signaux :
+  sigset_t mask;
+  struct sigaction act;
+  
+    sigemptyset (&mask); 
+  sigaddset (&mask, SIGCONT);
+  
+  act.sa_handler = drawUnivers;
+  act.sa_mask = mask;
+  
+  sigaction(SIGCONT, &act, NULL);
 }
 
-void finTravail(int i)
-{
-  signal(SIGUSR2, finTravail); 
-  
-  --nbDroneTravail;
-  
-}
 
 char* itoa(int i){
   char* str = calloc(12, sizeof(char));
@@ -199,8 +205,8 @@ void main()
 	T = initWorld();	//dessine l'univer
   
   
-  //INIT FILE MESSAGE 
-  // contient la cargaison du vaisseau
+//INIT FILE MESSAGE 
+  // la cargaison du vaisseau, et son contenu
   int msgCarId = msgget(IPC_PRIVATE, 0666|IPC_CREAT);
   srand(time(NULL)); //préparation aux chiffres aléatoires
   FOR(y, PROFONDEUR_SOUTE_VAISSEAU)
@@ -214,9 +220,25 @@ void main()
   strcat(buff, itoa(c->colis.id));
     setData(T[index_cargaison], x, y,buff);  //On remplie la soute
     msgsnd(msgCarId, (void*)c, sizeof(msgColis)-4, 0);
-    /*msgTest *t = genereMsgTest();*/
-    /*msgsnd(msgCarId, (void*)t, sizeof(msgTest), 0);*/
+
   }
+  
+  //Demande de décollage :
+    /*int msgCarId = msgget(IPC_PRIVATE, 0666|IPC_CREAT);*/
+  /*FOR(y, PROFONDEUR_SOUTE_VAISSEAU)*/
+  /*FOR(x, LARGEUR_VAISSEAU){*/
+    /*msgColis *c = genereMsgColis();*/
+    /**/
+    /*char*buff = calloc(LARGEUR_ID_COLIS+1, sizeof(char));*/
+    /**/
+      /*strcat(buff, itoa(c->colis.prio));*/
+  /*strcat(buff, "|");*/
+  /*strcat(buff, itoa(c->colis.id));*/
+    /*setData(T[index_cargaison], x, y,buff);  //On remplie la soute*/
+    /*msgsnd(msgCarId, (void*)c, sizeof(msgColis)-4, 0);*/
+
+  /*}*/
+  
   
   
   
@@ -233,9 +255,19 @@ void main()
     }
   }
   
+  //Gestion de signaux :
+  sigset_t mask;
+  struct sigaction act;
   
-  signal(SIGUSR1, drawUnivers); 
-  signal(SIGUSR2, finTravail);
+  sigemptyset (&mask); 
+  sigaddset (&mask, SIGCONT);
+  
+  act.sa_handler = drawUnivers;
+  act.sa_mask = mask;
+  
+  sigaction(SIGCONT, &act, NULL);
+  
+  /*signal(SIGUSR1, drawUnivers); */
 
   int* error = malloc(sizeof(int));
   *error = 0;

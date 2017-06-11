@@ -1,6 +1,8 @@
 #ifndef CONST
 #define CONST
 
+
+
 #include <sys/ipc.h>
 #include <sys/sem.h>
 //#include <sys/shm.h>
