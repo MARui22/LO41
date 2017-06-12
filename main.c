@@ -45,8 +45,9 @@ void finish(int i);
   
   Tableau **T;
   
-  int nbDroneTravail = NBDRONES; // !!!!!!!!!!!!!!!!!!!!!!!! en nominial, ça vaut le nombre de drones !
-
+  int nbDroneTravail = NBDRONES; 
+  sem_t* semD[NBDRONES];
+  
 Colis genereColis(){
   static int i = 0;
   Colis c;
@@ -75,9 +76,10 @@ void drawUnivers(int i)
    int index_num_livraison = 0;
   
 /*RECHARGE, ATTENTE_DEPART, ALLER, ATTENTE_LIVRAISON, RETOUR, ATTENTE_ATTERRISSAGE, DEAD};*/
-  int pos, num=2;  
+  int pos;  
   
   FOR(x, NBDRONES){
+sem_wait(semD[x]); 
   char* ncolis = shmD[x]->colis;
   
   /*on gère au cas par drone :*/
@@ -89,18 +91,14 @@ void drawUnivers(int i)
     if(ds & ATTENTE_DEPART)//- on récupere le numéro de colis du drone pour le suprimer de la cargaison
     {
           
-      if(strlen(ncolis)>2)
+      if(shmD[x]->id_colis !=-1)
       {
-        char* idc = calloc(12, sizeof(char));
-        while(ncolis[num] != '\0')
-          idc[num-2] = ncolis[num++];
-        
-          num = atoi(idc); // num contient le numéro de colis
-        //supprimons le colis n°num de la cargaison :
-          setData(T[index_cargaison], num%LARGEUR_VAISSEAU,num/LARGEUR_VAISSEAU, "");
+        index_num_livraison = shmD[x]->id_colis; // num contient le numéro de colis
+        //supprimons le colis n°index_num_livraison de la cargaison :
+        setData(T[index_cargaison], index_num_livraison%LARGEUR_VAISSEAU,index_num_livraison/LARGEUR_VAISSEAU, "");
         
         //on place le colis dans le drone n°x:    
-          setData(T[x], 0,0, ncolis);
+        setData(T[x], 0,0, ncolis);
       }
       setData(T[index_drone_decollage], x, 0, T[x]->titre);
       setData(T[index_drone_charge], x, 0, " ");
@@ -154,7 +152,7 @@ void drawUnivers(int i)
   }
     /*on place la hauteur du drone */
     *(T[x]->Y) = pos;
-      
+sem_post(semD[x]);      
   } //fin de l'actualisation des drones
   
   draw(T,nbTableaux);  
@@ -235,6 +233,18 @@ void main()
   /*semEnd2 = sem_open("end2", O_CREAT, 0644, 1);*/
   sem_t *semEnd3 = sem_open("end3", O_CREAT, 0600, 0);
   
+    //Semaphore de la memoire partagé des IPCDrone
+  char** nomSemD= malloc(NBDRONES*sizeof(char*));
+  
+  
+  FOR(x, NBDRONES)
+  {
+    nomSemD[x] = calloc(9, sizeof(char));
+    sprintf(nomSemD[x], "drone%d", x);
+    semD[x] = sem_open(nomSemD[x], O_CREAT, 0600, 1);
+    
+  }
+  
   
   /*sem_post(semEnd2);*/
     /*sem_post(semEnd2);*/
@@ -295,7 +305,7 @@ void main()
   FOR(x, NBDRONES){
     pid[x]= fork();
     if(pid[x] == 0){ //Fils n°x ------------------- RECOUVREMENT DRONE ------------------------------//
-      execlp("drone/drone.elf", "drone.elf", itoa(shmDId[x]), itoa(shmEndId), itoa(semEnd), itoa(msgCarId), itoa(msgDecId), itoa(msgAttId), (char*)0);
+      execlp("drone/drone.elf", "drone.elf", itoa(shmDId[x]), itoa(shmEndId), nomSemD[x], itoa(msgCarId), itoa(msgDecId), itoa(msgAttId), (char*)0);
       exit(5);
     }
   }
@@ -337,19 +347,19 @@ void main()
   
   
 
-*tmps =0 ;
-  /*while(*shmEnd != 0)*/
-    /*{sem_wait(semEnd3);*/
-    /**/
-      /**tmps = *tmps +1;*/
-    /*}*/
-      
+*tmps =-1 ;
+  while(*shmEnd != 0)
+    {sem_wait(semEnd3);
     
-    sem_wait(semEnd3);
+      *tmps = *tmps +1;
+    }
+      /**/
+    /**/
+    /*sem_wait(semEnd3);*/
 //    sem_wait(semEnd3);
         //sem_getvalue(semEnd3, tmps);
-  pint(*tmps, "semEnd3 fin2");
-  puts("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+  pint(*tmps, "Nombre de proc de fin de logiciel inexpliquable stopé");
+  /*puts("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");*/
 /**/
   /*sem_wait(semEnd3);*/
   /*sem_wait(semEnd3);*/
@@ -397,7 +407,7 @@ void main()
   
 	
   msgctl(msgCarId, IPC_RMID, NULL);
-  /*msgctl(msgAttId, IPC_RMID, NULL);  */
+  msgctl(msgAttId, IPC_RMID, NULL);  
   msgctl(msgDecId, IPC_RMID, NULL);
 }
 

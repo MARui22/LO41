@@ -52,10 +52,11 @@ int a = 0;
  
    //srand(time(NULL)); //préparation aux chiffres aléatoires
    int index = 1;
+   char *nomSemD = calloc(9, sizeof(char));
    
-   IPCDrone * shmD = shmat(atoi(argv[index++]), NULL, 0); //controle la position Y du drone dans l'univer
-   int* shmEnd = shmat(atoi(argv[index++]), NULL, 0);  //controle l'affichage du nom du colis
-   int semEnd = atoi(argv[index++]);                    // semaphore de signal de sin de logiciel
+   IPCDrone * shmD = shmat(atoi(argv[index++]), NULL, 0); //contient les données public du drone
+   int* shmEnd = shmat(atoi(argv[index++]), NULL, 0);  //contient le nombre de drones actifs
+   strcpy(nomSemD, argv[index++]);                // nom du sémaphore qui protège les données public du drone
    int msgCar = atoi(argv[index++]);                    //file de message qui contien la cargaison
    int msgDec = atoi(argv[index++]);                    //file de message de demande de decollage
    int msgAtt = atoi(argv[index++]);                    //file de message de demande d'atterrissage
@@ -64,14 +65,14 @@ int a = 0;
      char* tmp = calloc(12,sizeof(char)), *reset = calloc(LARGEUR_ID_COLIS +1, sizeof(char));//itoa2(colis->colis.id);
   
   /*struct timespec ts;*/
-  
-  sem_t *semEnd2 = sem_open("end2", O_RDWR);
-  sem_t *semEnd3 = sem_open("end3", O_RDWR);
+  sem_t *semD = sem_open(nomSemD, O_RDWR); //semaphore qui protège les données public du drone
+  sem_t *semEnd2 = sem_open("end2", O_RDWR);//semaphore qui protège la shm du nombre de drones activés
+  sem_t *semEnd3 = sem_open("end3", O_RDWR);//Semaphore qui déclenche la fin du logiciel
 
   
-      int* tmps = malloc(sizeof(int));
-  sem_getvalue(semEnd2, tmps);
-  pint(*tmps, "semEnd2 avant");
+      /*int* tmps = malloc(sizeof(int));*/
+  /*sem_getvalue(semEnd2, tmps);*/
+  /*pint(*tmps, "semEnd2 avant");*/
   //sem_wait(semEnd2);
   
   //    int* tmps = malloc(sizeof(int));
@@ -91,26 +92,29 @@ int a = 0;
   
   int cargo_non_vide = 1;
   
-    while(1)
+  while(1)
   {
   /*char* c = malloc(sizeof(char));*/
       
     /////// RECHARGE ////////////
+  sem_wait(semD);
     shmD->state = RECHARGE;
-     kill(getppid(), SIGCONT);
-    millisleep(colis->colis.trajet);
+    kill(getppid(), SIGCONT);
+  sem_post(semD);
+    sleep(1);
     
     ////// PRENDRE UN COLIS -- ATTENDE LE DEPART  ///////////////
     if( msgrcv(msgCar, (void*)colis , sizeof(msgColis)-4, -3  ,IPC_NOWAIT) == -1 )
       break;  //s'il n'y a plus de colis, alors on arrete le boulot
-      
+  sem_wait(semD);    
+    shmD->id_colis = colis->colis.id;
     strcpy(shmD->colis, reset);
     strcat(shmD->colis, (itoa2(colis->colis.prio, tmp)));
     strcat(shmD->colis, "|");
     strcat(shmD->colis, (itoa2(colis->colis.id, tmp)));
-    shmD->id_colis = colis->colis.id;
     shmD->state = ATTENTE_DEPART;  //on passe le drone dans le tableau "demande de décollage"  
     kill(getppid(), SIGCONT);
+  sem_post(semD);
     msgsnd(msgDec, (void*)dem, sizeof(Demande)-4, 0);
     /*signal(SIGUSR1, SIG_IGN);*/
     /*sigsuspend(&mask);*/
@@ -120,41 +124,39 @@ int a = 0;
     
     
     //////  ALLER -- FAIRE LE TRAJET  //////////
+  sem_wait(semD);
     shmD->state= ALLER; //on passe le drone dans la zone "voyage" de l'écran
     kill(getppid(), SIGCONT);
+  sem_post(semD);
     millisleep(colis->colis.trajet);
 
     //////  ATTENTE_LIVRAISON //////////////////////
+  sem_wait(semD);
     shmD->state= ATTENTE_LIVRAISON;
     kill(getppid(), SIGCONT);
+  sem_post(semD);
     millisleep(colis->colis.trajet);
     
     /////  RETOUR--voyage retour  //////////////////
+  sem_wait(semD);
     shmD->state= RETOUR;
     kill(getppid(), SIGCONT);
+  sem_post(semD);
     millisleep(colis->colis.trajet);
     
     /////   ATTENTE_ATTERRISSAGE  ////////////////////
+  sem_wait(semD);
     shmD->state= ATTENTE_ATTERRISSAGE; 
     kill(getppid(), SIGCONT);
+  sem_post(semD);
     millisleep(colis->colis.trajet);
     
-    
   }
-  
-  /*P(semEnd, 0);*/
-  /**shmEnd = *shmEnd -1; */
-  /**/
-  /*V(semEnd, 0);*/
-  
-  sem_getvalue(semEnd2, tmps);
-  pint(*tmps, "semEnd2 fin drone ******************************************");
   
   sem_wait(semEnd2);
     *shmEnd = *shmEnd -1;
     if(*shmEnd == 0 )
      sem_post(semEnd3);
-    pint(*shmEnd, "***********************vel shmend");// 
       
   sem_post(semEnd2);
   
