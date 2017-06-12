@@ -8,15 +8,17 @@
 //#include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/msg.h>
+#include <semaphore.h>
+
 
 #define NBDRONES 33
-#define LARGEUR_VAISSEAU 50
+#define LARGEUR_VAISSEAU 33
 #define PROFONDEUR_SOUTE_VAISSEAU 2
 #define LARGEUR_ID_COLIS 4
 #define GENERAL_OFFSET_LEFT 10
 
 #define TRAJET_MIN 1
-#define TRAJET_MAX 4
+#define TRAJET_MAX 2
 
 #define NBCOLIS (LARGEUR_VAISSEAU*PROFONDEUR_SOUTE_VAISSEAU)
 #define nbTableaux (7+NBDRONES) //7 + nombre de drones	
@@ -35,6 +37,11 @@ typedef struct {
 } IPCDrone;
 typedef unsigned short ushort;
 
+typedef struct {
+  long type;
+  pid_t demandeur;
+  } Demande;
+  
 typedef struct {
   int id;
   int prio;
@@ -71,6 +78,22 @@ sem_oper_V.sem_op  = 1 ;
 sem_oper_V.sem_flg  = 0 ;
 semop(sem_id, &sem_oper_V, 1);
 } 
+
+void sem_set(sem_t *sem, int i, int* buff)
+{
+sem_getvalue(sem, buff);
+  
+  while( *buff !=i)
+  {
+    if(*buff <i)
+      sem_post(sem);
+    else if(*buff>i)
+      sem_wait(sem);
+    
+    sem_getvalue(sem, buff);
+  }
+
+}
   
   
 #endif

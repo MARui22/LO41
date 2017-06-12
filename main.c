@@ -1,6 +1,7 @@
 
 #define _POSIX_SOURCE
 #define _XOPEN_SOURCE 
+#define _BSD_SOURCE 500
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,8 +12,14 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
-#include <math.h>
+/*#include <math.h>*/
 #include <signal.h>
+#include <pthread.h>
+
+#include <fcntl.h>           /* For O_* constants */
+#include <sys/stat.h>        /* For mode constants */
+#include <semaphore.h>
+
 
 #include "./gui/gui.h"
 #include "const.h"
@@ -174,6 +181,28 @@ char* itoa(int i){
   return str;
 }
 
+void* operateur_dec(void* tour)
+{
+
+  Demande *dem = malloc(sizeof(Demande));
+  int Tour = *((int*)tour);
+  pint(Tour, "msg");
+  while(1)
+  {
+    free(dem);
+    dem = malloc(sizeof(Demande));
+    msgrcv( Tour, (void*) dem, sizeof(Demande)-4, -3, 0);
+    pint((int)dem->demandeur, "recieve");
+    
+    
+    if(dem->demandeur < 0)
+      pthread_exit(NULL); //si la mission est terminée
+    
+    puts("recieve");
+    kill(dem->demandeur, SIGCONT);
+  }
+}
+
 void main()
 {	  
 
@@ -200,7 +229,26 @@ void main()
   
   //INIT SEMAPHORE  -- controle de la fin de logiciel
   int semEnd = initsem();
+  sem_t *semEnd2 = sem_open("end2", O_CREAT, 0600, 1);
+  /*sem_close(semEnd2);*/
+  
+  /*semEnd2 = sem_open("end2", O_CREAT, 0644, 1);*/
+  sem_t *semEnd3 = sem_open("end3", O_CREAT, 0600, 0);
+  
+  
+  /*sem_post(semEnd2);*/
+    /*sem_post(semEnd2);*/
+  /*sem_set(semEnd2, 1, malloc(sizeof(int)));*/
+  
+  /*sem_set(semEnd3, 0, malloc(sizeof(int)));*/
+  
+  
+  int* tmps = malloc(sizeof(int));
+  sem_getvalue(semEnd2, tmps);
+  pint(*tmps, "semEnd2 creation");
 
+
+  
   
 	T = initWorld();	//dessine l'univer
   
@@ -216,32 +264,29 @@ void main()
     char*buff = calloc(LARGEUR_ID_COLIS+1, sizeof(char));
     
       strcat(buff, itoa(c->colis.prio));
-  strcat(buff, "|");
-  strcat(buff, itoa(c->colis.id));
+    strcat(buff, "|");
+    strcat(buff, itoa(c->colis.id));
     setData(T[index_cargaison], x, y,buff);  //On remplie la soute
     msgsnd(msgCarId, (void*)c, sizeof(msgColis)-4, 0);
 
   }
   
   //Demande de décollage :
-    /*int msgCarId = msgget(IPC_PRIVATE, 0666|IPC_CREAT);*/
-  /*FOR(y, PROFONDEUR_SOUTE_VAISSEAU)*/
-  /*FOR(x, LARGEUR_VAISSEAU){*/
-    /*msgColis *c = genereMsgColis();*/
-    /**/
-    /*char*buff = calloc(LARGEUR_ID_COLIS+1, sizeof(char));*/
-    /**/
-      /*strcat(buff, itoa(c->colis.prio));*/
-  /*strcat(buff, "|");*/
-  /*strcat(buff, itoa(c->colis.id));*/
-    /*setData(T[index_cargaison], x, y,buff);  //On remplie la soute*/
-    /*msgsnd(msgCarId, (void*)c, sizeof(msgColis)-4, 0);*/
+    int msgDecId = msgget(IPC_PRIVATE, 0666|IPC_CREAT);
+  
+  //Demande d'atterrissage :
+    int msgAttId = msgget(IPC_PRIVATE, 0666|IPC_CREAT);
+  
+  
+//- CRÉATION DES TOURS DE CONTROLES POUR L'ATTERRISSAGE ET DÉCOLLAGE DES DRONES :
 
-  /*}*/
-  
-  
-  
-  
+  pthread_t operateurDec;
+  int * tmp = malloc(sizeof(int));
+  *tmp = msgDecId;
+  /*if(pthread_create(&operateurDec, NULL, operateur_dec, tmp) == -1) {*/
+	/*perror("erreur a la creation de la tour de controle de decollage");*/
+	/*return ;*/
+    /*}*/
 
 	draw(T, nbTableaux);
    
@@ -250,7 +295,7 @@ void main()
   FOR(x, NBDRONES){
     pid[x]= fork();
     if(pid[x] == 0){ //Fils n°x ------------------- RECOUVREMENT DRONE ------------------------------//
-      execlp("drone/drone.elf", "drone.elf", itoa(shmDId[x]), itoa(shmEndId), itoa(semEnd), itoa(msgCarId), (char*)0);
+      execlp("drone/drone.elf", "drone.elf", itoa(shmDId[x]), itoa(shmEndId), itoa(semEnd), itoa(msgCarId), itoa(msgDecId), itoa(msgAttId), (char*)0);
       exit(5);
     }
   }
@@ -272,33 +317,73 @@ void main()
   int* error = malloc(sizeof(int));
   *error = 0;
   
+  wait(NULL);
+  
   int loop = 1;
   
-  while(loop)
-  {
-    P(semEnd, 0);
-    if(*shmEnd != 0)
-    {
-      V(semEnd, 0);
-      sleep(1);
-    }else{
-      V(semEnd, 0);
-      loop = 0;
-    }
-  }
+  /*while(loop)*/
+  /*{*/
+    /*P(semEnd, 0);*/
+    /*if(*shmEnd != 0)*/
+    /*{*/
+      /*V(semEnd, 0);*/
+      /*sleep(1);*/
+    /*}else{*/
+      /*V(semEnd, 0);*/
+      /*loop = 0;*/
+    /*}*/
+  /*}*/
+  
+  
+  
 
+*tmps =0 ;
+  /*while(*shmEnd != 0)*/
+    /*{sem_wait(semEnd3);*/
+    /**/
+      /**tmps = *tmps +1;*/
+    /*}*/
+      
+    
+    sem_wait(semEnd3);
+//    sem_wait(semEnd3);
+        //sem_getvalue(semEnd3, tmps);
+  pint(*tmps, "semEnd3 fin2");
+  puts("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+/**/
+  /*sem_wait(semEnd3);*/
+  /*sem_wait(semEnd3);*/
+  /**/
+      /*sem_getvalue(semEnd3, tmps);*/
+  /*pint(*tmps, "semEnd3 fin3");*/
+  /*puts("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");*/
+  /**/
+  /*sem_wait(semEnd3);*/
+    /*sem_wait(semEnd3);*/
+  /*sem_wait(semEnd3);*/
+  
 
   
 
   drawUnivers(0);
+  
+  Demande* dem = malloc(sizeof(Demande));
+  dem->demandeur = -1;
+  msgsnd(msgDecId, (void*) dem, sizeof(Demande)-4, 0); //on indique à la tour de controle de décollage que la mission est terminée
 
   sleep(1);
   
- //msgget, msgctl
   shmdt(shmEnd);
   shmctl(shmEndId, IPC_RMID, NULL);
   
   semctl(semEnd, 0, IPC_RMID, NULL);
+  sem_close(semEnd2);
+  sem_close(semEnd3);
+  
+  sem_unlink("end2");
+  sem_unlink("end3");
+  
+  
   
   
   FOR(x,NBDRONES)
@@ -307,10 +392,13 @@ void main()
       
      shmctl(shmDId[x], IPC_RMID, NULL);
   }
+  
+ // pthread_join(operateurDec, NULL);
+  
 	
   msgctl(msgCarId, IPC_RMID, NULL);
-  
-  
+  /*msgctl(msgAttId, IPC_RMID, NULL);  */
+  msgctl(msgDecId, IPC_RMID, NULL);
 }
 
 int initsem() 

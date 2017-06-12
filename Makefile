@@ -1,6 +1,6 @@
 export CC=gcc
-export CFLAGS=-std=c99 -lpthread -g
-export LDFLAGS=
+export CFLAGS=-std=c99 -g -lpthread
+export LDFLAGS= -lpthread
 
 SRC= $(wildcard gui/*.c)
 OBJ= $(SRC:.c=.o)
@@ -18,11 +18,11 @@ main.elf: $(OBJ) main.o
 $(DRONE_DIR)/drone.elf: $(DRONE_DIR)/drone.o
 	@(cd $(DRONE_DIR) && $(MAKE))
 
-main.o: main.c $(HED) const.h
-	$(CC) -o $@ -c $< $(CFLAGS)
+main.o: main.c $(HED) const.h 
+	$(CC) -o $@ -c $< $(CFLAGS) 
 
 %.o: %.c
-	$(CC) -o $@ -c $< $(CFLAGS)
+	$(CC) -o $@ -c $< $(CFLAGS) 
 
 clean:
 	rm -rf *.o $(EXEC) $(OBJ) 
