@@ -100,16 +100,14 @@ void bienrecut(int i)
   
   int cargo_non_vide = 1;
   
+  
+  ////////////////////////////////////// DEBUT MISSION /////////////////////////////////////////////////////
+  
+  
   while(1)
   {
   /*char* c = malloc(sizeof(char));*/
       
-    /////// RECHARGE ////////////
-  sem_wait(semD);
-    shmD->state = RECHARGE;
-    kill(getppid(), SIGCONT);
-  sem_post(semD);
-    sleep(1);
     
     ////// PRENDRE UN COLIS -- ATTENDE LE DEPART  ///////////////
     if( msgrcv(msgCar, (void*)colis , sizeof(msgColis)-4, -3  ,IPC_NOWAIT) == -1 )
@@ -121,7 +119,7 @@ void bienrecut(int i)
     strcat(shmD->colis, "|");
     strcat(shmD->colis, (itoa2(colis->colis.id, tmp)));
     shmD->state = ATTENTE_DEPART;  //on passe le drone dans le tableau "demande de décollage"  
-    kill(getppid(), SIGCONT);
+    kill(getppid(), SIGUSR2);
   sem_post(semD);
     signal(SIGUSR1, bienrecut);
     msgsnd(msgDec, (void*)dem, sizeof(Demande)-4, 0);
@@ -129,34 +127,33 @@ void bienrecut(int i)
     /*sigsuspend(&mask);*/
     pause();
     /*sleep(1);*/
-    
-    
+  
     
     //////  ALLER -- FAIRE LE TRAJET  //////////
   sem_wait(semD);
     shmD->state= ALLER; //on passe le drone dans la zone "voyage" de l'écran
-    kill(getppid(), SIGCONT);
+    kill(getppid(), SIGUSR2);
   sem_post(semD);
     millisleep(colis->colis.trajet);
 
     //////  ATTENTE_LIVRAISON //////////////////////
   sem_wait(semD);
     shmD->state= ATTENTE_LIVRAISON;
-    kill(getppid(), SIGCONT);
+    kill(getppid(), SIGUSR2);
   sem_post(semD);
-    millisleep(colis->colis.trajet);
+    millisleep(rand()/(RAND_MAX/(TEMPS_RECEPTION_MAX*1000 - 1000*TEMPS_RECEPTION_MIN))+TEMPS_RECEPTION_MIN*1000);
     
     /////  RETOUR--voyage retour  //////////////////
   sem_wait(semD);
     shmD->state= RETOUR;
-    kill(getppid(), SIGCONT);
+    kill(getppid(), SIGUSR2);
   sem_post(semD);
     millisleep(colis->colis.trajet);
     
     /////   ATTENTE_ATTERRISSAGE  ////////////////////
   sem_wait(semD);
     shmD->state= ATTENTE_ATTERRISSAGE; 
-    kill(getppid(), SIGCONT);
+    kill(getppid(), SIGUSR2);
   sem_post(semD);
     signal(SIGUSR1, bienrecut);
     msgsnd(msgAtt, (void*)dem, sizeof(Demande)-4, 0);
@@ -164,6 +161,13 @@ void bienrecut(int i)
     /*sigsuspend(&mask);*/
     pause();
     
+    
+    /////// RECHARGE ////////////
+  sem_wait(semD);
+    shmD->state = RECHARGE;
+    kill(getppid(), SIGUSR2);
+  sem_post(semD);
+    sleep(1);
   }
   
   sem_wait(semEnd2);

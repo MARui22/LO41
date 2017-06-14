@@ -13,13 +13,15 @@
 #include <fcntl.h> 
 
 
-#define NBDRONES 33
-#define LARGEUR_VAISSEAU 33
-#define PROFONDEUR_SOUTE_VAISSEAU 2
+#define NBDRONES 30
+#define LARGEUR_VAISSEAU 30
+#define PROFONDEUR_SOUTE_VAISSEAU 2 //ATTENTION !!! DOIT IMPÉRATIVEMENT ÊTRE UN NOMBRE PAIRE !!!
 #define GENERAL_OFFSET_LEFT 10
 
-#define TRAJET_MIN 1
+#define TRAJET_MIN 1          //temps de trajet minimu du vaisseau au ballon
 #define TRAJET_MAX 2
+#define TEMPS_RECEPTION_MIN 1 //temps de réaction minimum du client qui receptione son colis
+#define TEMPS_RECEPTION_MAX 4
 #define TEMPS_MANOEUVRE_DECOLLAGE 250 // en milliseconde
 #define TEMPS_MANOEUVRE_ATTERRISSAGE 300 // en milliseconde
 

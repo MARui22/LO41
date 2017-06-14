@@ -122,13 +122,13 @@ sem_wait(semD[x]);
       if(shmD[x]->id_colis !=-1)
       {
         
-          index_num_livraison = shmD[x]->id_colis; // num contient le numéro de colis
-      
+        index_num_livraison = shmD[x]->id_colis; // num contient le numéro de colis
     
-          setData(T[index_maison], index_num_livraison%LARGEUR_VAISSEAU,(index_num_livraison)/LARGEUR_VAISSEAU,
-            ncolis);
-          
-          shmD[x]->id_colis = -1;
+  
+        setData(T[index_maison], index_num_livraison%LARGEUR_VAISSEAU,(index_num_livraison)/LARGEUR_VAISSEAU,
+          ncolis);
+        
+        shmD[x]->id_colis = -1;
       }
 
     /*getData(T[x], 0,0)*/
@@ -146,10 +146,13 @@ sem_wait(semD[x]);
   {  pos=drone_Y_livraison;
   
   }
-  else
+  else if(ds |DEAD)
   {  pos=drone_Y_dead;
   
   }
+  else
+    pos = drone_Y_repos;
+  
     /*on place la hauteur du drone */
     *(T[x]->Y) = pos;
 sem_post(semD[x]);      
@@ -164,12 +167,12 @@ sem_post(semD[x]);
   struct sigaction act;
   
     sigemptyset (&mask); 
-  sigaddset (&mask, SIGCONT);
+  sigaddset (&mask, SIGUSR2);
   
   act.sa_handler = drawUnivers;
   act.sa_mask = mask;
   
-  sigaction(SIGCONT, &act, NULL);
+  sigaction(SIGUSR2, &act, NULL);
 }
 
 
@@ -179,28 +182,28 @@ char* itoa(int i){
   return str;
 }
 
-void* operateur_dec(void* tour)
-{
-
-  Demande *dem = malloc(sizeof(Demande));
-  int Tour = *((int*)tour);
-  pint(Tour, "msg");
-  while(1)
-  {
-    free(dem);
-    dem = malloc(sizeof(Demande));
-    msgrcv( Tour, (void*) dem, sizeof(Demande)-4, -3, 0);
-    pint((int)dem->demandeur, "recieve");
-    
-    sleep(1);
-    
-    if(dem->demandeur < 0)
-      pthread_exit(NULL); //si la mission est terminée
-    
-    puts("recieve");
-    kill(dem->demandeur, SIGCONT);
-  }
-}
+/*void* operateur_dec(void* tour)*/
+/*{*/
+/**/
+  /*Demande *dem = malloc(sizeof(Demande));*/
+  /*int Tour = *((int*)tour);*/
+  /*pint(Tour, "msg");*/
+  /*while(1)*/
+  /*{*/
+    /*free(dem);*/
+    /*dem = malloc(sizeof(Demande));*/
+    /*msgrcv( Tour, (void*) dem, sizeof(Demande)-4, -3, 0);*/
+    /*pint((int)dem->demandeur, "recieve");*/
+    /**/
+    /*sleep(1);*/
+    /**/
+    /*if(dem->demandeur < 0)*/
+      /*pthread_exit(NULL); //si la mission est terminée*/
+    /**/
+    /*puts("recieve");*/
+    /*kill(dem->demandeur, SIGCONT);*/
+  /*}*/
+/*}*/
 
 void main()
 {	  
@@ -216,6 +219,7 @@ void main()
       puts("echec creation memoire partagee pour les drones");
     
     shmD[x] = shmat(shmDId[x], NULL, 0);
+    shmD[x]->state = RECHARGE;
     
 	}
   
@@ -289,11 +293,10 @@ void main()
     int msgAttId = msgget(IPC_PRIVATE, 0666|IPC_CREAT);
   
   
-//- CRÉATION DES TOURS DE CONTROLES POUR L'ATTERRISSAGE ET DÉCOLLAGE DES DRONES :
 
-  pthread_t operateurDec;
-  int * tmp = malloc(sizeof(int));
-  *tmp = msgDecId;
+  /*pthread_t operateurDec;*/
+  /*int * tmp = malloc(sizeof(int));*/
+  /**tmp = msgDecId;*/
   /*if(pthread_create(&operateurDec, NULL, operateur_dec, tmp) == -1) {*/
 	/*perror("erreur a la creation de la tour de controle de decollage");*/
 	/*return ;*/
@@ -301,29 +304,21 @@ void main()
 
 	draw(T, nbTableaux);
    
-  /////////////////////////////////////////////Gestion de signaux :
+  /////////////////////////////////////////////GESTION DE SIGNAUX :
   sigset_t mask;
   struct sigaction act;
   
   sigemptyset (&mask); 
-  sigaddset (&mask, SIGCONT);
+  sigaddset (&mask, SIGUSR2);
   
   act.sa_handler = drawUnivers;
   act.sa_mask = mask;
   
-  sigaction(SIGCONT, &act, NULL);
+  sigaction(SIGUSR2, &act, NULL);
    
    ////////////////////////////////////////------FORK
+    //- CRÉATION DES TOURS DE CONTROLES POUR L'ATTERRISSAGE ET DÉCOLLAGE DES DRONES :
   
-  pid_t pidD[NBDRONES];
-  FOR(x, NBDRONES){
-    pidD[x]= fork();
-    if(pidD[x] == 0){ //Fils n°x ------------------- RECOUVREMENT DRONE ------------------------------//
-      execlp("drone/drone.elf", "drone.elf", itoa(shmDId[x]), itoa(shmEndId), nomSemD[x], itoa(msgCarId), itoa(msgDecId), itoa(msgAttId), (char*)0);
-      perror("erreur recouvrement drone");
-      exit(5);
-    }
-  }
   
   pid_t pidTourDec;
   pidTourDec = fork();
@@ -344,7 +339,18 @@ void main()
       
       exit(5);
   }
-  
+
+    //- CREATION DES DRONES :
+    
+  pid_t pidD[NBDRONES];
+  FOR(x, NBDRONES){
+    pidD[x]= fork();
+    if(pidD[x] == 0){ //Fils n°x ------------------- RECOUVREMENT DRONE ------------------------------//
+      execlp("drone/drone.elf", "drone.elf", itoa(shmDId[x]), itoa(shmEndId), nomSemD[x], itoa(msgCarId), itoa(msgDecId), itoa(msgAttId), (char*)0);
+      perror("erreur recouvrement drone");
+      exit(5);
+    }
+  }
   
   /*signal(SIGUSR1, drawUnivers); */
 
@@ -483,7 +489,7 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
   FOR(x, NBDRONES){
     sprintf(droneName, "d%d", x);
     T[x] = createTableau(1,1,LARGEUR_ID_COLIS,droneName);
-    setPos(T[x], GENERAL_OFFSET_LEFT + x*(LARGEUR_ID_COLIS+1), drone_Y_dead );
+    setPos(T[x], GENERAL_OFFSET_LEFT + x*(LARGEUR_ID_COLIS+1), drone_Y_repos );
   }
   
 
