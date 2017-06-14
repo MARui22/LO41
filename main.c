@@ -192,6 +192,7 @@ void* operateur_dec(void* tour)
     msgrcv( Tour, (void*) dem, sizeof(Demande)-4, -3, 0);
     pint((int)dem->demandeur, "recieve");
     
+    sleep(1);
     
     if(dem->demandeur < 0)
       pthread_exit(NULL); //si la mission est terminée
@@ -206,11 +207,11 @@ void main()
 
   
   
-  //INIT MEMOIRE PARTAGEE
+  //////////////////////////INIT MEMOIRE PARTAGEE
   //parametre des drones
   FOR(x,NBDRONES)
 	{
-		shmDId[x] = shmget(IPC_PRIVATE, sizeof(IPCDrone), 0666|IPC_CREAT);
+		shmDId[x] = shmDelNCreat(sizeof(IPCDrone));//shmget(IPC_PRIVATE, sizeof(IPCDrone), 0666|IPC_CREAT);
     if(shmD[x] <0)
       puts("echec creation memoire partagee pour les drones");
     
@@ -219,19 +220,19 @@ void main()
 	}
   
   //controle de fin de logiciel, pricipalement pour initier le netoyage des IPC
-  shmEndId = shmget(IPC_PRIVATE, sizeof(int), 0666|IPC_CREAT);
+  shmEndId = shmDelNCreat(sizeof(int));//shmget(IPC_PRIVATE, sizeof(int), 0666|IPC_CREAT);
   if(shmEndId <0)
       puts("echec creation memoire partagee pour la fin du programme");
   shmEnd = shmat(shmEndId, NULL, 0);
   *shmEnd = NBDRONES;
   
-  //INIT SEMAPHORE  -- controle de la fin de logiciel
+//////////////////////////////////////INIT SEMAPHORE 
   int semEnd = initsem();
-  sem_t *semEnd2 = sem_open("end2", O_CREAT, 0600, 1);
+  sem_t *semEnd2 = semDelNCreat("end2", 1);
   /*sem_close(semEnd2);*/
   
   /*semEnd2 = sem_open("end2", O_CREAT, 0644, 1);*/
-  sem_t *semEnd3 = sem_open("end3", O_CREAT, 0600, 0);
+  sem_t *semEnd3 = semDelNCreat("end3",0);
   
     //Semaphore de la memoire partagé des IPCDrone
   char** nomSemD= malloc(NBDRONES*sizeof(char*));
@@ -241,7 +242,7 @@ void main()
   {
     nomSemD[x] = calloc(9, sizeof(char));
     sprintf(nomSemD[x], "drone%d", x);
-    semD[x] = sem_open(nomSemD[x], O_CREAT, 0600, 1);
+    semD[x] = semDelNCreat(nomSemD[x], 1);
     
   }
   
@@ -263,7 +264,7 @@ void main()
 	T = initWorld();	//dessine l'univer
   
   
-//INIT FILE MESSAGE 
+//////////////////////////////////////INIT FILE MESSAGE 
   // la cargaison du vaisseau, et son contenu
   int msgCarId = msgget(IPC_PRIVATE, 0666|IPC_CREAT);
   srand(time(NULL)); //préparation aux chiffres aléatoires
@@ -300,17 +301,7 @@ void main()
 
 	draw(T, nbTableaux);
    
-  
-  pid_t pid[NBDRONES];
-  FOR(x, NBDRONES){
-    pid[x]= fork();
-    if(pid[x] == 0){ //Fils n°x ------------------- RECOUVREMENT DRONE ------------------------------//
-      execlp("drone/drone.elf", "drone.elf", itoa(shmDId[x]), itoa(shmEndId), nomSemD[x], itoa(msgCarId), itoa(msgDecId), itoa(msgAttId), (char*)0);
-      exit(5);
-    }
-  }
-  
-  //Gestion de signaux :
+  /////////////////////////////////////////////Gestion de signaux :
   sigset_t mask;
   struct sigaction act;
   
@@ -321,6 +312,29 @@ void main()
   act.sa_mask = mask;
   
   sigaction(SIGCONT, &act, NULL);
+   
+   ////////////////////////////////////////------FORK
+  
+  pid_t pidD[NBDRONES];
+  FOR(x, NBDRONES){
+    pidD[x]= fork();
+    if(pidD[x] == 0){ //Fils n°x ------------------- RECOUVREMENT DRONE ------------------------------//
+      execlp("drone/drone.elf", "drone.elf", itoa(shmDId[x]), itoa(shmEndId), nomSemD[x], itoa(msgCarId), itoa(msgDecId), itoa(msgAttId), (char*)0);
+      perror("erreur recouvrement drone");
+      exit(5);
+    }
+  }
+  
+  pid_t pidTour;
+  pidTour = fork();
+  if(pidTour == 0)    //fils tour de controlle decollage
+  {
+      execlp("tour_de_controle/tour_decollage.elf", "tour_decollage.elf", itoa(msgDecId), (char*)0);
+      perror("pas de tour de decollage");
+      
+      exit(5);
+  }
+  
   
   /*signal(SIGUSR1, drawUnivers); */
 
@@ -345,6 +359,25 @@ void main()
   /*}*/
   
   
+  /*////////////////TOUR DE CONTROLE*/
+  /*Demande *dem = malloc(sizeof(Demande));*/
+  /*while(1)*/
+  /*{*/
+    /*msgrcv( msgDecId, (void*) dem, sizeof(Demande)-4, -3, 0);*/
+   // pint((int)dem->demandeur, "recieve");
+/**/
+    /**/
+    /*if(dem->demandeur < 0)*/
+      /*break; // la mission est terminée*/
+    /**/
+    /*sleep(2);*/
+    /**/
+    /**/
+    /*puts("recieve");*/
+    /*kill(dem->demandeur, SIGCONT);*/
+    /*kill(dem->demandeur, SIGUSR1);*/
+  /*}*/
+  
   
 
 *tmps =-1 ;
@@ -353,10 +386,7 @@ void main()
     
       *tmps = *tmps +1;
     }
-      /**/
-    /**/
-    /*sem_wait(semEnd3);*/
-//    sem_wait(semEnd3);
+
         //sem_getvalue(semEnd3, tmps);
   pint(*tmps, "Nombre de proc de fin de logiciel inexpliquable stopé");
   /*puts("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");*/
@@ -377,9 +407,9 @@ void main()
 
   drawUnivers(0);
   
-  Demande* dem = malloc(sizeof(Demande));
-  dem->demandeur = -1;
-  msgsnd(msgDecId, (void*) dem, sizeof(Demande)-4, 0); //on indique à la tour de controle de décollage que la mission est terminée
+  /*Demande* dem2 = malloc(sizeof(Demande));*/
+  /*dem2->demandeur = -1;*/
+  /*msgsnd(msgDecId, (void*) dem2, sizeof(Demande)-4, 0); //on indique à la tour de controle de décollage que la mission est terminée*/
 
   sleep(1);
   
@@ -403,7 +433,7 @@ void main()
      shmctl(shmDId[x], IPC_RMID, NULL);
   }
   
- // pthread_join(operateurDec, NULL);
+  //pthread_join(operateurDec, NULL);
   
 	
   msgctl(msgCarId, IPC_RMID, NULL);

@@ -5,10 +5,12 @@
 
 #include <sys/ipc.h>
 #include <sys/sem.h>
-//#include <sys/shm.h>
+#include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/msg.h>
 #include <semaphore.h>
+
+#include <fcntl.h> 
 
 
 #define NBDRONES 33
@@ -19,6 +21,7 @@
 
 #define TRAJET_MIN 1
 #define TRAJET_MAX 2
+#define TEMPS_PREPARATION_DECOLLAGE 250 // en milliseconde
 
 #define NBCOLIS (LARGEUR_VAISSEAU*PROFONDEUR_SOUTE_VAISSEAU)
 #define nbTableaux (7+NBDRONES) //7 + nombre de drones	
@@ -94,6 +97,30 @@ sem_getvalue(sem, buff);
   }
 
 }
-  
+
+int shmDelNCreat(size_t size)
+{int shmId;
+  if((shmId = shmget(IPC_PRIVATE, size, 0666|IPC_CREAT|IPC_EXCL) )== -1)
+  {
+    shmId = shmget(IPC_PRIVATE, size, 0666);
+    shmctl(shmId, IPC_RMID, 0);
+    return shmget(IPC_PRIVATE, size, 0666|IPC_CREAT);
+  }
+  return shmId;
+
+}
+
+sem_t* semDelNCreat(char* name, int init)
+{sem_t* semId;
+  if((semId = sem_open(name, O_CREAT|O_EXCL, 0600, init))== SEM_FAILED)
+  {
+    sem_unlink(name);
+    return sem_open(name, O_CREAT, 0600, init);
+  }
+  return semId;
+
+}
+
+
   
 #endif

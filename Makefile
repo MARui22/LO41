@@ -7,8 +7,9 @@ OBJ= $(SRC:.c=.o)
 HED= $(SRC:.c=.h)
 
 DRONE_DIR=drone
+TOUR_DIR=tour_de_controle
 
-EXEC=main.elf $(DRONE_DIR)/drone.elf
+EXEC=main.elf $(DRONE_DIR)/drone.elf $(TOUR_DIR)/tour_decollage.elf
 
 all: $(EXEC)
 
@@ -17,6 +18,10 @@ main.elf: $(OBJ) main.o
 	
 $(DRONE_DIR)/drone.elf: $(DRONE_DIR)/drone.o
 	@(cd $(DRONE_DIR) && $(MAKE))
+  
+$(TOUR_DIR)/tour_decollage.elf: $(TOUR_DIR)/tour_decollage.o
+	@(cd $(TOUR_DIR) && $(MAKE))
+
 
 main.o: main.c $(HED) const.h 
 	$(CC) -o $@ -c $< $(CFLAGS) 

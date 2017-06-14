@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
-#include <time.h>
 
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
@@ -22,16 +21,18 @@
 #include "../gui/gui.h"
 #include "../const.h"
 
+
 #define FOR(p, F) for(int p = 0; p<F; ++p)
 
 
+
+               
+//enum droneState {RECHARGE, ATTENTE_DEPART, ALLER, ATTENTE_LIVRAISON, RETOUR, ATTENTE_ATTERRISSAGE, DEAD};
 int millisleep(unsigned ms)
 {
   return usleep(1000 * ms);
 }
-               
-//enum droneState {RECHARGE, ATTENTE_DEPART, ALLER, ATTENTE_LIVRAISON, RETOUR, ATTENTE_ATTERRISSAGE, DEAD};
-
+  
 char* itoa2(int i, char* str){
   /*char* str = calloc(12, sizeof(char));*/
   sprintf(str, "%d", i);
@@ -46,6 +47,12 @@ int a = 0;
     i[a] = c[a++];
     
   }
+}
+
+void bienrecut(int i)
+{
+  //pint(getpid(), "bien recut");
+  
 }
 
  void main(int argc, char *argv[]){
@@ -85,8 +92,9 @@ int a = 0;
    sigset_t mask;
    sigfillset(&mask);
    sigdelset(&mask, SIGUSR1);
-   
-  
+   /**/
+   /*sigemptyset(&mask);*/
+   /*sigaddset(&mask, SIGUSR1);  */
 
   /*ms2ts(&ts, colis->colis.trajet*1000);*/
   
@@ -115,11 +123,12 @@ int a = 0;
     shmD->state = ATTENTE_DEPART;  //on passe le drone dans le tableau "demande de décollage"  
     kill(getppid(), SIGCONT);
   sem_post(semD);
+    signal(SIGUSR1, bienrecut);
     msgsnd(msgDec, (void*)dem, sizeof(Demande)-4, 0);
     /*signal(SIGUSR1, SIG_IGN);*/
     /*sigsuspend(&mask);*/
-    sleep(1);
-    //pause();
+    pause();
+    /*sleep(1);*/
     
     
     
@@ -156,7 +165,11 @@ int a = 0;
   sem_wait(semEnd2);
     *shmEnd = *shmEnd -1;
     if(*shmEnd == 0 )
-     sem_post(semEnd3);
+     {sem_post(semEnd3);
+      dem->demandeur = -1;
+      msgsnd(msgDec, (void*)dem, sizeof(Demande)-4, 0);
+      
+     }
       
   sem_post(semEnd2);
   
