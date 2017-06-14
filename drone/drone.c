@@ -87,7 +87,7 @@ void bienrecut(int i)
   msgColis* colis = malloc(sizeof(msgColis));
   Demande* dem = malloc(sizeof(Demande));
   dem->demandeur = getpid();
-  dem->type = 1;
+  dem->type = 2;
   
    sigset_t mask;
    sigfillset(&mask);
@@ -166,8 +166,8 @@ void bienrecut(int i)
     *shmEnd = *shmEnd -1;
     if(*shmEnd == 0 )
      {sem_post(semEnd3);
-      dem->demandeur = -1;
-      msgsnd(msgDec, (void*)dem, sizeof(Demande)-4, 0);
+      /*dem->demandeur = -1;*/
+      /*msgsnd(msgDec, (void*)dem, sizeof(Demande)-4, 0);*/
       
      }
       

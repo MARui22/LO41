@@ -343,43 +343,6 @@ void main()
   
   wait(NULL);
   
-  int loop = 1;
-  
-  /*while(loop)*/
-  /*{*/
-    /*P(semEnd, 0);*/
-    /*if(*shmEnd != 0)*/
-    /*{*/
-      /*V(semEnd, 0);*/
-      /*sleep(1);*/
-    /*}else{*/
-      /*V(semEnd, 0);*/
-      /*loop = 0;*/
-    /*}*/
-  /*}*/
-  
-  
-  /*////////////////TOUR DE CONTROLE*/
-  /*Demande *dem = malloc(sizeof(Demande));*/
-  /*while(1)*/
-  /*{*/
-    /*msgrcv( msgDecId, (void*) dem, sizeof(Demande)-4, -3, 0);*/
-   // pint((int)dem->demandeur, "recieve");
-/**/
-    /**/
-    /*if(dem->demandeur < 0)*/
-      /*break; // la mission est terminée*/
-    /**/
-    /*sleep(2);*/
-    /**/
-    /**/
-    /*puts("recieve");*/
-    /*kill(dem->demandeur, SIGCONT);*/
-    /*kill(dem->demandeur, SIGUSR1);*/
-  /*}*/
-  
-  
-
 *tmps =-1 ;
   while(*shmEnd != 0)
     {sem_wait(semEnd3);
@@ -390,10 +353,6 @@ void main()
         //sem_getvalue(semEnd3, tmps);
   pint(*tmps, "Nombre de proc de fin de logiciel inexpliquable stopé");
   /*puts("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");*/
-/**/
-  /*sem_wait(semEnd3);*/
-  /*sem_wait(semEnd3);*/
-  /**/
       /*sem_getvalue(semEnd3, tmps);*/
   /*pint(*tmps, "semEnd3 fin3");*/
   /*puts("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");*/
@@ -407,9 +366,10 @@ void main()
 
   drawUnivers(0);
   
-  /*Demande* dem2 = malloc(sizeof(Demande));*/
-  /*dem2->demandeur = -1;*/
-  /*msgsnd(msgDecId, (void*) dem2, sizeof(Demande)-4, 0); //on indique à la tour de controle de décollage que la mission est terminée*/
+  Demande* dem2 = malloc(sizeof(Demande));
+  dem2->type = 1;
+  dem2->demandeur = -1;
+  msgsnd(msgDecId, (void*) dem2, sizeof(Demande)-4, 0); //on indique à la tour de controle de décollage que la mission est terminée
 
   sleep(1);
   

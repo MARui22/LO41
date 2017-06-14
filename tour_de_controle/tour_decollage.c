@@ -21,6 +21,11 @@ int millisleep(unsigned ms)
 {
   return usleep(1000 * ms);
 }
+
+void pint(int t, char* c)
+{
+	printf("%s : %d\n",c,t);
+}
   
 char* itoa(int i){
   char* str = calloc(12, sizeof(char));
@@ -51,6 +56,8 @@ int msgDec = atoi(argv[1]);
     /*kill(dem->demandeur, SIGCONT);*/
     kill(dem->demandeur, SIGUSR1);
   }
+  
+  puts("tour de decollage : OVER");
 
 
 }
