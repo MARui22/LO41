@@ -257,10 +257,10 @@ void main()
   
   /*sem_set(semEnd3, 0, malloc(sizeof(int)));*/
   
-  
-  int* tmps = malloc(sizeof(int));
-  sem_getvalue(semEnd2, tmps);
-  pint(*tmps, "semEnd2 creation");
+  /**/
+  /*int* tmps = malloc(sizeof(int));*/
+  /*sem_getvalue(semEnd2, tmps);*/
+  /*pint(*tmps, "semEnd2 creation");*/
 
 
   
@@ -301,9 +301,57 @@ void main()
 	/*perror("erreur a la creation de la tour de controle de decollage");*/
 	/*return ;*/
     /*}*/
+/**/
+	/*draw(T, nbTableaux);*/
+  
+  
+  //------------------ FONCTION DE CLEAN
+                void range_tout(int i)
+                {
 
-	draw(T, nbTableaux);
+                  Demande* dem2 = malloc(sizeof(Demande));
+                  dem2->type = 1;
+                  dem2->demandeur = -1;
+                  msgsnd(msgDecId, (void*) dem2, sizeof(Demande)-4, 0); //on indique à la tour de controle de décollage que la mission est terminée
+                  msgsnd(msgAttId, (void*) dem2, sizeof(Demande)-4, 0); //on indique à la tour de controle d'atterrissage que la mission est terminée
+
+                  sleep(1);
+                  
+                  shmdt(shmEnd);
+                  shmctl(shmEndId, IPC_RMID, NULL);
+                  
+                  semctl(semEnd, 0, IPC_RMID, NULL);
+                  sem_close(semEnd2);
+                  sem_close(semEnd3);
+                  
+                  sem_unlink("end2");
+                  sem_unlink("end3");
+                  
+                  
+                  
+                  
+                  FOR(x,NBDRONES)
+                  {
+                     shmdt(shmD[x]);
+                      
+                     shmctl(shmDId[x], IPC_RMID, NULL);
+                  }
+                  
+                  if(i != 0)
+                  {
+                    signal(SIGINT, SIG_DFL);
+                    raise(SIGINT);
+                    
+                  }
+                //pthread_join(operateurDec, NULL);  
+	
+                msgctl(msgCarId, IPC_RMID, NULL);
+                msgctl(msgAttId, IPC_RMID, NULL);  
+                msgctl(msgDecId, IPC_RMID, NULL);
    
+                }
+                  
+                  
   /////////////////////////////////////////////GESTION DE SIGNAUX :
   sigset_t mask;
   struct sigaction act;
@@ -315,9 +363,10 @@ void main()
   act.sa_mask = mask;
   
   sigaction(SIGUSR2, &act, NULL);
-   
-   ////////////////////////////////////////------FORK
-    //- CRÉATION DES TOURS DE CONTROLES POUR L'ATTERRISSAGE ET DÉCOLLAGE DES DRONES :
+  signal(SIGINT, range_tout);
+  
+  ////////////////////////////////////////------FORK
+  //- CRÉATION DES TOURS DE CONTROLES POUR L'ATTERRISSAGE ET DÉCOLLAGE DES DRONES :
   
   
   pid_t pidTourDec;
@@ -353,12 +402,13 @@ void main()
   }
   
   /*signal(SIGUSR1, drawUnivers); */
+/**/
+  /*int* error = malloc(sizeof(int));*/
+  /**error = 0;*/
 
-  int* error = malloc(sizeof(int));
-  *error = 0;
   
   wait(NULL);
-  
+  int* tmps = malloc(sizeof(int));
 *tmps =-1 ;
   while(*shmEnd != 0)
     {sem_wait(semEnd3);
@@ -382,41 +432,12 @@ void main()
 
   drawUnivers(0);
   
-  Demande* dem2 = malloc(sizeof(Demande));
-  dem2->type = 1;
-  dem2->demandeur = -1;
-  msgsnd(msgDecId, (void*) dem2, sizeof(Demande)-4, 0); //on indique à la tour de controle de décollage que la mission est terminée
-  msgsnd(msgAttId, (void*) dem2, sizeof(Demande)-4, 0); //on indique à la tour de controle d'atterrissage que la mission est terminée
 
-  sleep(1);
-  
-  shmdt(shmEnd);
-  shmctl(shmEndId, IPC_RMID, NULL);
-  
-  semctl(semEnd, 0, IPC_RMID, NULL);
-  sem_close(semEnd2);
-  sem_close(semEnd3);
-  
-  sem_unlink("end2");
-  sem_unlink("end3");
   
   
-  
-  
-  FOR(x,NBDRONES)
-  {
-     shmdt(shmD[x]);
-      
-     shmctl(shmDId[x], IPC_RMID, NULL);
-  }
-  
-  //pthread_join(operateurDec, NULL);
-  
-	
-  msgctl(msgCarId, IPC_RMID, NULL);
-  msgctl(msgAttId, IPC_RMID, NULL);  
-  msgctl(msgDecId, IPC_RMID, NULL);
+  range_tout(0);
 }
+
 
 int initsem() 
 {
