@@ -325,12 +325,22 @@ void main()
     }
   }
   
-  pid_t pidTour;
-  pidTour = fork();
-  if(pidTour == 0)    //fils tour de controlle decollage
+  pid_t pidTourDec;
+  pidTourDec = fork();
+  if(pidTourDec == 0)    //fils tour de controle decollage
   {
-      execlp("tour_de_controle/tour_decollage.elf", "tour_decollage.elf", itoa(msgDecId), (char*)0);
+      execlp("tour_de_controle/tour_controle.elf", "tour_controle.elf", itoa(msgDecId), itoa(TEMPS_MANOEUVRE_DECOLLAGE), (char*)0);
       perror("pas de tour de decollage");
+      
+      exit(5);
+  }
+  
+  pid_t pidTourAtt;
+  pidTourAtt = fork();
+  if(pidTourAtt == 0)    //fils tour de controle atterrissage
+  {
+      execlp("tour_de_controle/tour_controle.elf", "tour_controle.elf", itoa(msgAttId), itoa(TEMPS_MANOEUVRE_ATTERRISSAGE), (char*)0);
+      perror("pas de tour d'atterrissage");
       
       exit(5);
   }
@@ -370,6 +380,7 @@ void main()
   dem2->type = 1;
   dem2->demandeur = -1;
   msgsnd(msgDecId, (void*) dem2, sizeof(Demande)-4, 0); //on indique à la tour de controle de décollage que la mission est terminée
+  msgsnd(msgAttId, (void*) dem2, sizeof(Demande)-4, 0); //on indique à la tour de controle d'atterrissage que la mission est terminée
 
   sleep(1);
   

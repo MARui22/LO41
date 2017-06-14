@@ -37,6 +37,8 @@ void main(int argc, char* argv[])
 {
 
 int msgDec = atoi(argv[1]);
+int sleep_time = atoi(argv[2]);
+
   ////////////////TOUR DE CONTROLE
   Demande *dem = malloc(sizeof(Demande));
   while(1)
@@ -48,7 +50,7 @@ int msgDec = atoi(argv[1]);
     if(dem->demandeur < 0)
       break; // la mission est terminée
     
-    millisleep(TEMPS_PREPARATION_DECOLLAGE);
+    millisleep(sleep_time);
     
     
     
@@ -57,7 +59,7 @@ int msgDec = atoi(argv[1]);
     kill(dem->demandeur, SIGUSR1);
   }
   
-  puts("tour de decollage : OVER");
+  puts("tour de controle : OVER");
 
 
 }

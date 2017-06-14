@@ -1,11 +1,11 @@
-EXEC=tour_decollage.elf
+EXEC=tour_controle.elf
 
 SRC= $(wildcard *.c)
 OBJ= $(SRC:.c=.o)
 
 all: $(EXEC)
 
-tour_decollage.elf: $(OBJ) ../const.h
+tour_controle.elf: $(OBJ) ../const.h
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c

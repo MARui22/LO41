@@ -9,7 +9,7 @@ HED= $(SRC:.c=.h)
 DRONE_DIR=drone
 TOUR_DIR=tour_de_controle
 
-EXEC=main.elf $(DRONE_DIR)/drone.elf $(TOUR_DIR)/tour_decollage.elf
+EXEC=main.elf $(DRONE_DIR)/drone.elf $(TOUR_DIR)/tour_controle.elf
 
 all: $(EXEC)
 
@@ -19,7 +19,7 @@ main.elf: $(OBJ) main.o
 $(DRONE_DIR)/drone.elf: $(DRONE_DIR)/drone.o
 	@(cd $(DRONE_DIR) && $(MAKE))
   
-$(TOUR_DIR)/tour_decollage.elf: $(TOUR_DIR)/tour_decollage.o
+$(TOUR_DIR)/tour_controle.elf: $(TOUR_DIR)/tour_controle.o
 	@(cd $(TOUR_DIR) && $(MAKE))
 
 

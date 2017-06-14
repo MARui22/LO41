@@ -158,7 +158,11 @@ void bienrecut(int i)
     shmD->state= ATTENTE_ATTERRISSAGE; 
     kill(getppid(), SIGCONT);
   sem_post(semD);
-    millisleep(colis->colis.trajet);
+    signal(SIGUSR1, bienrecut);
+    msgsnd(msgAtt, (void*)dem, sizeof(Demande)-4, 0);
+    /*signal(SIGUSR1, SIG_IGN);*/
+    /*sigsuspend(&mask);*/
+    pause();
     
   }
   
