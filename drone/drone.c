@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <pthread.h>
+
 
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
@@ -25,9 +27,9 @@
 #define FOR(p, F) for(int p = 0; p<F; ++p)
 
 
-
                
 //enum droneState {RECHARGE, ATTENTE_DEPART, ALLER, ATTENTE_LIVRAISON, RETOUR, ATTENTE_ATTERRISSAGE, DEAD};
+sem_t semB;
 int millisleep(unsigned ms)
 {
   return usleep(1000 * ms);
@@ -55,10 +57,41 @@ void bienrecut(int i)
   
 }
 
+void * consommation(void* bat)
+{
+ int* batterie = (int*)bat;
+ 
+  while(1)
+ {
+  sem_wait(&semB);
+    *batterie = *batterie -1;
+    /*pint(*batterie, "////////////il reste");*/
+    
+    if(*batterie <1)
+    {
+      sem_post(&semB);
+      raise(SIGUSR2);
+      pthread_exit(NULL);
+    }
+  sem_post(&semB);
+  sleep(1);
+  
+
+  
+  
+ 
+ }
+
+}
+
+
  void main(int argc, char *argv[]){
  
+
+  
    //srand(time(NULL)); //préparation aux chiffres aléatoires
    int index = 1;
+   pid_t ppid = getppid();
    char *nomSemD = calloc(9, sizeof(char));
    
    IPCDrone * shmD = shmat(atoi(argv[index++]), NULL, 0); //contient les données public du drone
@@ -75,7 +108,11 @@ void bienrecut(int i)
   sem_t *semD = sem_open(nomSemD, O_RDWR); //semaphore qui protège les données public du drone
   sem_t *semEnd2 = sem_open("end2", O_RDWR);//semaphore qui protège la shm du nombre de drones activés
   sem_t *semEnd3 = sem_open("end3", O_RDWR);//Semaphore qui déclenche la fin du logiciel
-
+  sem_init(&semB, 0, 1);//Semaphore  qui protège le niveau de la batterie
+  
+    int* batterie = malloc(sizeof(int));
+    *batterie = CAPACITE_BATTERIE;
+    pthread_t pcons;
   
       /*int* tmps = malloc(sizeof(int));*/
   /*sem_getvalue(semEnd2, tmps);*/
@@ -83,6 +120,69 @@ void bienrecut(int i)
   //sem_wait(semEnd2);
   
   //    int* tmps = malloc(sizeof(int));
+  
+                                        void range_tout()
+                                        {
+                                        sem_wait(semEnd2);
+                                          *shmEnd = *shmEnd -1;
+                                          if(*shmEnd == 0 )
+                                           {sem_post(semEnd3);
+                                            /*dem->demandeur = -1;*/
+                                            /*msgsnd(msgDec, (void*)dem, sizeof(Demande)-4, 0);*/
+                                           }
+                                        sem_post(semEnd2);
+                                        
+                                          sem_close(semEnd2);
+                                          sem_close(semEnd3);
+                                          sem_close(&semB);
+                                          sem_close(semD);
+                                          
+                                            sem_destroy(&semB);
+                                          
+                                         // sem_unlink("batterie");
+                                          
+                                          shmdt(shmD);
+                                          shmdt(shmEnd);
+                                        
+                                        }
+                                        
+                                      void dead(int osef)
+                                      {
+                                      //////////////  DEAD ///////////////
+                                      sem_wait(semD);//-------------------- début d'une petite annimation du drone qui tombe'
+                                      
+                                        if(shmD->state== ATTENTE_ATTERRISSAGE)
+                                        {                                            
+                                          shmD->state= ALLER; 
+                                          kill(ppid, SIGUSR2);
+                                      sem_post(semD);
+                                          
+                                          millisleep(60);
+                                          
+                                      sem_wait(semD);
+                                        }
+                                          
+                                        if(shmD->state & (ALLER | RETOUR) )
+                                        { 
+                                          shmD->state= ATTENTE_LIVRAISON; 
+                                          kill(ppid, SIGUSR2);
+                                      sem_post(semD);
+                                        
+                                          millisleep(60);
+                                      sem_wait(semD);
+                                        }
+                                  
+                                        shmD->state= DEAD; 
+                                        kill(ppid, SIGUSR2);
+                                      sem_post(semD);//-------------------- le drone est au sol
+                                      
+                                        pthread_join(pcons, NULL);
+                                        range_tout();
+                                        puts("dead");
+                                        
+                                        raise(SIGINT);
+                                        
+                                      }
   
   msgColis* colis = malloc(sizeof(msgColis));
   Demande* dem = malloc(sizeof(Demande));
@@ -92,22 +192,24 @@ void bienrecut(int i)
    sigset_t mask;
    sigfillset(&mask);
    sigdelset(&mask, SIGUSR1);
+   sigdelset(&mask, SIGUSR2);
+   sigdelset(&mask, SIGINT);
+   
+   signal(SIGUSR2, dead);
+   
    /**/
    /*sigemptyset(&mask);*/
    /*sigaddset(&mask, SIGUSR1);  */
 
   /*ms2ts(&ts, colis->colis.trajet*1000);*/
-  
-  int cargo_non_vide = 1;
-  
-  
+
   ////////////////////////////////////// DEBUT MISSION /////////////////////////////////////////////////////
   
   
   while(1)
   {
   /*char* c = malloc(sizeof(char));*/
-      
+    
     
     ////// PRENDRE UN COLIS -- ATTENDE LE DEPART  ///////////////
     if( msgrcv(msgCar, (void*)colis , sizeof(msgColis)-4, -3  ,IPC_NOWAIT) == -1 )
@@ -130,6 +232,7 @@ void bienrecut(int i)
   
     
     //////  ALLER -- FAIRE LE TRAJET  //////////
+    pthread_create(&pcons, 0, consommation, batterie);
   sem_wait(semD);
     shmD->state= ALLER; //on passe le drone dans la zone "voyage" de l'écran
     kill(getppid(), SIGUSR2);
@@ -163,29 +266,22 @@ void bienrecut(int i)
     
     
     /////// RECHARGE ////////////
+    pthread_cancel(pcons);
+    
   sem_wait(semD);
     shmD->state = RECHARGE;
     kill(getppid(), SIGUSR2);
   sem_post(semD);
     sleep(1);
+    *batterie = CAPACITE_BATTERIE;
   }
   
-  sem_wait(semEnd2);
-    *shmEnd = *shmEnd -1;
-    if(*shmEnd == 0 )
-     {sem_post(semEnd3);
-      /*dem->demandeur = -1;*/
-      /*msgsnd(msgDec, (void*)dem, sizeof(Demande)-4, 0);*/
-      
-     }
-      
-  sem_post(semEnd2);
+
+    
+  range_tout();
   
-  sem_close(semEnd2);
-  sem_close(semEnd3);
   
-  shmdt(shmD);
-  shmdt(shmEnd);
+
   /*kill(getppid(), SIGUSR2);*/
   
     

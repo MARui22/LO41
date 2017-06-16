@@ -142,16 +142,17 @@ sem_wait(semD[x]);
   
   
   }
-  else if(ds |ATTENTE_LIVRAISON)
+  else if(ds &ATTENTE_LIVRAISON)
   {  pos=drone_Y_livraison;
   
   }
-  else if(ds |DEAD)
-  {  pos=drone_Y_dead;
+  else if(ds &DEAD)
+  {  
+    pos=drone_Y_dead;
   
   }
   else
-    pos = drone_Y_repos;
+    pos = drone_Y_dead;
   
     /*on place la hauteur du drone */
     *(T[x]->Y) = pos;
@@ -236,7 +237,7 @@ void main()
   /*sem_close(semEnd2);*/
   
   /*semEnd2 = sem_open("end2", O_CREAT, 0644, 1);*/
-  sem_t *semEnd3 = semDelNCreat("end3",0);
+  sem_t *semEnd3 = semDelNCreat("end3",1);
   
     //Semaphore de la memoire partagé des IPCDrone
   char** nomSemD= malloc(NBDRONES*sizeof(char*));
@@ -255,7 +256,8 @@ void main()
     /*sem_post(semEnd2);*/
   /*sem_set(semEnd2, 1, malloc(sizeof(int)));*/
   
-  /*sem_set(semEnd3, 0, malloc(sizeof(int)));*/
+  sem_set(semEnd3, 0, malloc(sizeof(int)));
+  puts("ok");
   
   /**/
   /*int* tmps = malloc(sizeof(int));*/
@@ -490,7 +492,7 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
 	
   char lineOfDead[vaisseau->Lchar];
   strcpy(lineOfDead, "Dead\t");
-  FOR(osef, vaisseau->Lchar/3-10)
+  FOR(osef, vaisseau->Lchar/3)
     strcat(lineOfDead, "\u2501");
     
   Label * limiteDead = createLabel(lineOfDead, 0,
