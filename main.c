@@ -413,7 +413,7 @@ void main()
   /*int* error = malloc(sizeof(int));*/
   /**error = 0;*/
 
-  
+  FOR(osef, NBDRONES + 2)
   wait(NULL);
   int* tmps = malloc(sizeof(int));
 *tmps =-1 ;
