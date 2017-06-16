@@ -24,7 +24,8 @@
 #define TEMPS_RECEPTION_MAX 4
 #define TEMPS_MANOEUVRE_DECOLLAGE 250 // en milliseconde
 #define TEMPS_MANOEUVRE_ATTERRISSAGE 300 // en milliseconde
-#define CAPACITE_BATTERIE 8
+#define CAPACITE_BATTERIE 8             //Temps avant que la batterie ne s'épuise
+#define FACTEUR_RECHARGEMENT_BATTERIE 1 //ex : 2 => rechargement 2 fois plus lent que la consommation
 
 #if LARGEUR_VAISSEAU*PROFONDEUR_SOUTE_VAISSEAU >100
   #define LARGEUR_ID_COLIS 5

@@ -491,7 +491,7 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
 	
   char lineOfDead[vaisseau->Lchar];
   strcpy(lineOfDead, "Dead\t");
-  FOR(osef, vaisseau->Lchar/3)
+  FOR(osef, GENERAL_OFFSET_LEFT - 5 + vaisseau->Lchar/3)
     strcat(lineOfDead, "\u2501");
     
   Label * limiteDead = createLabel(lineOfDead, 0,

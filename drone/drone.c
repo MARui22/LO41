@@ -178,7 +178,7 @@ void * consommation(void* bat)
                                       
                                         pthread_join(pcons, NULL);
                                         range_tout();
-                                        puts("dead");
+                                        /*puts("dead");*/
                                         
                                         raise(SIGINT);
                                         
@@ -267,22 +267,20 @@ void * consommation(void* bat)
     
     /////// RECHARGE ////////////
     pthread_cancel(pcons);
-    
   sem_wait(semD);
     shmD->state = RECHARGE;
     kill(getppid(), SIGUSR2);
-  sem_post(semD);
-    sleep(1);
-    *batterie = CAPACITE_BATTERIE;
+  sem_post(semD);  
+    while(*batterie< CAPACITE_BATTERIE)
+    {
+      *batterie = *batterie +1;
+      millisleep(1000*FACTEUR_RECHARGEMENT_BATTERIE);
+    }
   }
   
 
     
   range_tout();
-  
-  
-
-  /*kill(getppid(), SIGUSR2);*/
   
     
   }
