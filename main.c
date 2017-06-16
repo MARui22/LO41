@@ -209,6 +209,9 @@ char* itoa(int i){
 void main()
 {	  
 
+  pid_t pidD[NBDRONES];
+  pid_t pidTourAtt;
+  pid_t pidTourDec;
   
   
   //////////////////////////INIT MEMOIRE PARTAGEE
@@ -327,8 +330,6 @@ void main()
                   sem_unlink("/end3");
                   
                   
-                  
-                  
                   FOR(x,NBDRONES)
                   {
                      shmdt(shmD[x]);
@@ -338,18 +339,26 @@ void main()
                      sem_unlink(nomSemD[x]);
                   }
                   
+                msgctl(msgCarId, IPC_RMID, NULL);
+                msgctl(msgAttId, IPC_RMID, NULL);  
+                msgctl(msgDecId, IPC_RMID, NULL);
+   
                   if(i != 0)
                   {
+                    kill(pidTourAtt,SIGINT );
+                    kill(pidTourDec,SIGINT );
+                    
+                    FOR(x, NBDRONES)
+                    {
+                      kill(pidD[x], SIGINT); 
+                    }
+                    
                     signal(SIGINT, SIG_DFL);
                     raise(SIGINT);
                     
                   }
                 //pthread_join(operateurDec, NULL);  
 	
-                msgctl(msgCarId, IPC_RMID, NULL);
-                msgctl(msgAttId, IPC_RMID, NULL);  
-                msgctl(msgDecId, IPC_RMID, NULL);
-   
                 }
                   
                   
@@ -370,7 +379,6 @@ void main()
   //- CRÉATION DES TOURS DE CONTROLES POUR L'ATTERRISSAGE ET DÉCOLLAGE DES DRONES :
   
   
-  pid_t pidTourDec;
   pidTourDec = fork();
   if(pidTourDec == 0)    //fils tour de controle decollage
   {
@@ -380,7 +388,6 @@ void main()
       exit(5);
   }
   
-  pid_t pidTourAtt;
   pidTourAtt = fork();
   if(pidTourAtt == 0)    //fils tour de controle atterrissage
   {
@@ -392,7 +399,6 @@ void main()
 
     //- CREATION DES DRONES :
     
-  pid_t pidD[NBDRONES];
   FOR(x, NBDRONES){
     pidD[x]= fork();
     if(pidD[x] == 0){ //Fils n°x ------------------- RECOUVREMENT DRONE ------------------------------//
@@ -491,7 +497,7 @@ Tableau** initWorld()	//place les tableaux des drones sur les premières cases !!
 	
   char lineOfDead[vaisseau->Lchar];
   strcpy(lineOfDead, "Dead\t");
-  FOR(osef, GENERAL_OFFSET_LEFT - 5 + vaisseau->Lchar/3)
+  FOR(osef, GENERAL_OFFSET_LEFT - 3 + vaisseau->Lchar/3)
     strcat(lineOfDead, "\u2501");
     
   Label * limiteDead = createLabel(lineOfDead, 0,
