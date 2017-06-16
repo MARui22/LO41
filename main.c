@@ -233,11 +233,11 @@ void main()
   
 //////////////////////////////////////INIT SEMAPHORE 
   int semEnd = initsem();
-  sem_t *semEnd2 = semDelNCreat("end2", 1);
+  sem_t *semEnd2 = semDelNCreat("/end2", 1);
   /*sem_close(semEnd2);*/
   
-  /*semEnd2 = sem_open("end2", O_CREAT, 0644, 1);*/
-  sem_t *semEnd3 = semDelNCreat("end3",1);
+  /*semEnd2 = sem_open("/end2", O_CREAT, 0644, 1);*/
+  sem_t *semEnd3 = semDelNCreat("/end3",0);
   
     //Semaphore de la memoire partagé des IPCDrone
   char** nomSemD= malloc(NBDRONES*sizeof(char*));
@@ -246,18 +246,15 @@ void main()
   FOR(x, NBDRONES)
   {
     nomSemD[x] = calloc(9, sizeof(char));
-    sprintf(nomSemD[x], "drone%d", x);
+    sprintf(nomSemD[x], "/drone%d", x);
     semD[x] = semDelNCreat(nomSemD[x], 1);
     
   }
   
-  
-  /*sem_post(semEnd2);*/
-    /*sem_post(semEnd2);*/
   /*sem_set(semEnd2, 1, malloc(sizeof(int)));*/
   
-  sem_set(semEnd3, 0, malloc(sizeof(int)));
-  puts("ok");
+  //sem_set(semEnd3, 0, malloc(sizeof(int)));
+  //puts("ok");
   
   /**/
   /*int* tmps = malloc(sizeof(int));*/
@@ -326,8 +323,8 @@ void main()
                   sem_close(semEnd2);
                   sem_close(semEnd3);
                   
-                  sem_unlink("end2");
-                  sem_unlink("end3");
+                  sem_unlink("/end2");
+                  sem_unlink("/end3");
                   
                   
                   
@@ -337,6 +334,8 @@ void main()
                      shmdt(shmD[x]);
                       
                      shmctl(shmDId[x], IPC_RMID, NULL);
+                     sem_close(semD[x]);
+                     sem_unlink(nomSemD[x]);
                   }
                   
                   if(i != 0)

@@ -106,8 +106,8 @@ void * consommation(void* bat)
   
   /*struct timespec ts;*/
   sem_t *semD = sem_open(nomSemD, O_RDWR); //semaphore qui protège les données public du drone
-  sem_t *semEnd2 = sem_open("end2", O_RDWR);//semaphore qui protège la shm du nombre de drones activés
-  sem_t *semEnd3 = sem_open("end3", O_RDWR);//Semaphore qui déclenche la fin du logiciel
+  sem_t *semEnd2 = sem_open("/end2", O_RDWR);//semaphore qui protège la shm du nombre de drones activés
+  sem_t *semEnd3 = sem_open("/end3", O_RDWR);//Semaphore qui déclenche la fin du logiciel
   sem_init(&semB, 0, 1);//Semaphore  qui protège le niveau de la batterie
   
     int* batterie = malloc(sizeof(int));
@@ -137,7 +137,7 @@ void * consommation(void* bat)
                                           sem_close(&semB);
                                           sem_close(semD);
                                           
-                                            sem_destroy(&semB);
+                                          sem_destroy(&semB);
                                           
                                          // sem_unlink("batterie");
                                           
