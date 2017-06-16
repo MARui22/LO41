@@ -154,7 +154,7 @@ void * consommation(void* bat)
                                         if(shmD->state== ATTENTE_ATTERRISSAGE)
                                         {                                            
                                           shmD->state= ALLER; 
-                                          kill(ppid, SIGUSR2);
+                                          kill(ppid, SIGCONT);
                                       sem_post(semD);
                                           
                                           millisleep(60);
@@ -165,7 +165,7 @@ void * consommation(void* bat)
                                         if(shmD->state & (ALLER | RETOUR) )
                                         { 
                                           shmD->state= ATTENTE_LIVRAISON; 
-                                          kill(ppid, SIGUSR2);
+                                          kill(ppid, SIGCONT);
                                       sem_post(semD);
                                         
                                           millisleep(60);
@@ -173,7 +173,7 @@ void * consommation(void* bat)
                                         }
                                   
                                         shmD->state= DEAD; 
-                                        kill(ppid, SIGUSR2);
+                                        kill(ppid, SIGCONT);
                                       sem_post(semD);//-------------------- le drone est au sol
                                       
                                         pthread_join(pcons, NULL);
@@ -221,7 +221,7 @@ void * consommation(void* bat)
     strcat(shmD->colis, "|");
     strcat(shmD->colis, (itoa2(colis->colis.id, tmp)));
     shmD->state = ATTENTE_DEPART;  //on passe le drone dans le tableau "demande de décollage"  
-    kill(getppid(), SIGUSR2);
+    kill(ppid, SIGCONT);
   sem_post(semD);
     signal(SIGUSR1, bienrecut);
     msgsnd(msgDec, (void*)dem, sizeof(Demande)-4, 0);
@@ -235,28 +235,28 @@ void * consommation(void* bat)
     pthread_create(&pcons, 0, consommation, batterie);
   sem_wait(semD);
     shmD->state= ALLER; //on passe le drone dans la zone "voyage" de l'écran
-    kill(getppid(), SIGUSR2);
+    kill(ppid, SIGCONT);
   sem_post(semD);
     millisleep(colis->colis.trajet);
 
     //////  ATTENTE_LIVRAISON //////////////////////
   sem_wait(semD);
     shmD->state= ATTENTE_LIVRAISON;
-    kill(getppid(), SIGUSR2);
+    kill(ppid, SIGCONT);
   sem_post(semD);
     millisleep(rand()/(RAND_MAX/(TEMPS_RECEPTION_MAX*1000 - 1000*TEMPS_RECEPTION_MIN))+TEMPS_RECEPTION_MIN*1000);
     
     /////  RETOUR--voyage retour  //////////////////
   sem_wait(semD);
     shmD->state= RETOUR;
-    kill(getppid(), SIGUSR2);
+    kill(ppid, SIGCONT);
   sem_post(semD);
     millisleep(colis->colis.trajet);
     
     /////   ATTENTE_ATTERRISSAGE  ////////////////////
   sem_wait(semD);
     shmD->state= ATTENTE_ATTERRISSAGE; 
-    kill(getppid(), SIGUSR2);
+    kill(ppid, SIGCONT);
   sem_post(semD);
     signal(SIGUSR1, bienrecut);
     msgsnd(msgAtt, (void*)dem, sizeof(Demande)-4, 0);
@@ -269,7 +269,7 @@ void * consommation(void* bat)
     pthread_cancel(pcons);
   sem_wait(semD);
     shmD->state = RECHARGE;
-    kill(getppid(), SIGUSR2);
+    kill(ppid, SIGCONT);
   sem_post(semD);  
     while(*batterie< CAPACITE_BATTERIE)
     {

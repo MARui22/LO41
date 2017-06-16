@@ -168,12 +168,12 @@ sem_post(semD[x]);
   struct sigaction act;
   
     sigemptyset (&mask); 
-  sigaddset (&mask, SIGUSR2);
+  sigaddset (&mask, SIGCONT);
   
   act.sa_handler = drawUnivers;
   act.sa_mask = mask;
   
-  sigaction(SIGUSR2, &act, NULL);
+  sigaction(SIGCONT, &act, NULL);
 }
 
 
@@ -358,12 +358,12 @@ void main()
   struct sigaction act;
   
   sigemptyset (&mask); 
-  sigaddset (&mask, SIGUSR2);
+  sigaddset (&mask, SIGCONT);
   
   act.sa_handler = drawUnivers;
   act.sa_mask = mask;
   
-  sigaction(SIGUSR2, &act, NULL);
+  sigaction(SIGCONT, &act, NULL);
   signal(SIGINT, range_tout);
   
   ////////////////////////////////////////------FORK
