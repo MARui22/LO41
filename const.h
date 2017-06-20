@@ -13,19 +13,33 @@
 #include <fcntl.h> 
 
 
-#define NBDRONES 20
-#define LARGEUR_VAISSEAU 20
-#define PROFONDEUR_SOUTE_VAISSEAU 4 //ATTENTION !!! DOIT IMPÉRATIVEMENT ÊTRE UN NOMBRE PAIRE !!!
-#define GENERAL_OFFSET_LEFT 10
 
-#define TRAJET_MIN 1          //temps de trajet minimu du vaisseau au ballon
+
+
+//	NOMBRE DE COLIS/DRONES :
+#define NBDRONES 30
+#define LARGEUR_VAISSEAU 30			// DOIT ÊTRE >= NBDRONES
+#define PROFONDEUR_SOUTE_VAISSEAU 2 //ATTENTION !!! DOIT IMPÉRATIVEMENT ÊTRE UN NOMBRE PAIRE !!!
+
+
+// PARRAMETRES DES TEMPS DE SIMULATION :
+#define TRAJET_MIN 1          			//temps de trajet minimu du vaisseau au ballon
 #define TRAJET_MAX 2
-#define TEMPS_RECEPTION_MIN 1 //temps de réaction minimum du client qui receptione son colis
+
+#define TEMPS_RECEPTION_MIN 1 			//temps de réaction minimum du client qui receptione son colis
 #define TEMPS_RECEPTION_MAX 4
-#define TEMPS_MANOEUVRE_DECOLLAGE 250 // en milliseconde
-#define TEMPS_MANOEUVRE_ATTERRISSAGE 1000 // en milliseconde
-#define CAPACITE_BATTERIE 15             //Temps avant que la batterie ne s'épuise
+
+#define TEMPS_MANOEUVRE_DECOLLAGE 250 	//temps requis pour effectuer un décollage en milliseconde
+#define TEMPS_MANOEUVRE_ATTERRISSAGE 300//temps requis pour effectuer un atterrissage en milliseconde
+
+#define CAPACITE_BATTERIE 4             //Temps avant que la batterie ne s'épuise
 #define FACTEUR_RECHARGEMENT_BATTERIE 1 //ex : 2 => rechargement 2 fois plus lent que la consommation
+
+
+
+
+
+#define GENERAL_OFFSET_LEFT 10
 
 #if LARGEUR_VAISSEAU*PROFONDEUR_SOUTE_VAISSEAU >100
   #define LARGEUR_ID_COLIS 5
