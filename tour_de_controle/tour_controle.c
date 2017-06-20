@@ -39,11 +39,17 @@ void main(int argc, char* argv[])
 int msgDec = atoi(argv[1]);
 int sleep_time = atoi(argv[2]);
 
+int type;
+if(CAPACITE_BATTERIE>3)
+  type = -CAPACITE_BATTERIE;
+else
+  type = -3;
+
   ////////////////TOUR DE CONTROLE
   Demande *dem = malloc(sizeof(Demande));
   while(1)
   {
-    msgrcv( msgDec, (void*) dem, sizeof(Demande)-4, -3, 0);
+    msgrcv( msgDec, (void*) dem, sizeof(Demande)-4, type, 0);
     /*pint((int)dem->demandeur, "recieve");*/
 
     
@@ -56,7 +62,10 @@ int sleep_time = atoi(argv[2]);
     
     /*puts("recieve");*/
     /*kill(dem->demandeur, SIGCONT);*/
-    kill(dem->demandeur, SIGUSR1);
+
+    if(dem->demandeur != 0 )
+      kill(dem->demandeur, SIGUSR1);
+      
   }
   
   puts("tour de controle : OVER");

@@ -223,6 +223,8 @@ void * consommation(void* bat)
     shmD->state = ATTENTE_DEPART;  //on passe le drone dans le tableau "demande de décollage"  
     kill(ppid, SIGCONT);
   sem_post(semD);
+    dem->type = colis->colis.prio; //on indique notre priorité de décollage
+    
     signal(SIGUSR1, bienrecut);
     msgsnd(msgDec, (void*)dem, sizeof(Demande)-4, 0);
     /*signal(SIGUSR1, SIG_IGN);*/
@@ -259,7 +261,12 @@ void * consommation(void* bat)
     kill(ppid, SIGCONT);
   sem_post(semD);
     signal(SIGUSR1, bienrecut);
-    msgsnd(msgAtt, (void*)dem, sizeof(Demande)-4, 0);
+  
+  sem_wait(&semB);
+    dem->type = *batterie; //on indique notre besoins de rentrer au plus vite.
+  sem_post(&semB);
+  
+  msgsnd(msgAtt, (void*)dem, sizeof(Demande)-4, 0);
     /*signal(SIGUSR1, SIG_IGN);*/
     /*sigsuspend(&mask);*/
     pause();
