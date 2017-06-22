@@ -72,10 +72,8 @@ msgColis *genereMsgColis()
 
 void drawUnivers(int i)
 {
-   /*signal(SIGUSR1, SIG_IGN);*/
    int index_num_livraison = 0;
-  
-/*RECHARGE, ATTENTE_DEPART, ALLER, ATTENTE_LIVRAISON, RETOUR, ATTENTE_ATTERRISSAGE, DEAD};*/
+  /* Liste des états des drones : RECHARGE, ATTENTE_DEPART, ALLER, ATTENTE_LIVRAISON, RETOUR, ATTENTE_ATTERRISSAGE, DEAD*/
   int pos;  
   
   FOR(x, NBDRONES){
@@ -295,18 +293,6 @@ void main()
     int msgAttId = msgget(IPC_PRIVATE, 0666|IPC_CREAT);
   
   
-
-  /*pthread_t operateurDec;*/
-  /*int * tmp = malloc(sizeof(int));*/
-  /**tmp = msgDecId;*/
-  /*if(pthread_create(&operateurDec, NULL, operateur_dec, tmp) == -1) {*/
-	/*perror("erreur a la creation de la tour de controle de decollage");*/
-	/*return ;*/
-    /*}*/
-/**/
-	/*draw(T, nbTableaux);*/
-  
-  
   //------------------ FONCTION DE CLEAN
                 void range_tout(int i)
                 {
@@ -424,7 +410,7 @@ void main()
     }
 
         //sem_getvalue(semEnd3, tmps);
-  pint(*tmps, "Nombre de proc de fin de logiciel inexpliquable stopé");
+  //pint(*tmps, "Nombre de proc de fin de logiciel inexpliquable stopé");
   /*puts("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");*/
       /*sem_getvalue(semEnd3, tmps);*/
   /*pint(*tmps, "semEnd3 fin3");*/

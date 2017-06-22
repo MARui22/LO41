@@ -49,7 +49,8 @@ else
   Demande *dem = malloc(sizeof(Demande));
   while(1)
   {
-    msgrcv( msgDec, (void*) dem, sizeof(Demande)-4, type, 0);
+    if(msgrcv( msgDec, (void*) dem, sizeof(Demande)-4, type, 0) == -1)
+      break;
     /*pint((int)dem->demandeur, "recieve");*/
 
     
@@ -68,7 +69,7 @@ else
       
   }
   
-  puts("tour de controle : OVER");
+ // puts("tour de controle : OVER");
 
 
 }
