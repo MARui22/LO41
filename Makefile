@@ -32,6 +32,7 @@ main.o: main.c $(HED) const.h
 clean:
 	rm -rf *.o $(EXEC) $(OBJ) 
 	@(cd $(DRONE_DIR) && $(MAKE) $@)
+	@(cd $(TOUR_DIR) && $(MAKE) $@)
 
 	
 	# gcc -std=c99 -o main.elf gui/tab.h gui/gui.h gui/tab.c gui/gui.c main.c
